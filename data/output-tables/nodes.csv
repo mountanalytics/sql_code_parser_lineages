@@ -1,0 +1,46 @@
+,NAME_NODE,LABEL_NODE,WHERE,FUNCTION,ON,COLOR,ID
+0,subquery1_5,json_data0@subquery1_5,orders.status = 'Completed',subquery,,grey,0
+1,orders,orders,,table,,grey,1
+2,subquery1_4,json_data0@subquery1_4,,subquery,,grey,2
+3,reviews,reviews,,table,,grey,3
+4,subquery1_3,json_data0@subquery1_3,,subquery,"['order_items.product_id = products.product_id', 'products.category_id = categories.category_id']",grey,4
+5,order_items,order_items,,table,,grey,5
+6,products,products,,table,,grey,6
+7,subquery1_2,json_data0@subquery1_2,,subquery,,grey,7
+8,payments,payments,,table,,grey,8
+9,subquery1_1,json_data0@subquery1_1,"orders.order_date >= DATE_ADD(CURRENT_TIMESTAMP(), -1, 'MONTH') AND orders.status = 'Completed'",subquery,,grey,9
+10,CUSTOMER_ORDER,CUSTOMER_ORDER,"customers.signup_date <= DATE_ADD(CURRENT_TIMESTAMP(), -1, 'MONTH')",target,"['customers.customer_id = subquery1_1.customer_id', 'subquery1_1.order_id = subquery1_2.order_id', 'subquery1_1.order_id = subquery1_3.order_id', 'subquery1_3.product_id = subquery1_4.product_id', 'customers.customer_id = subquery1_5.customer_id']",grey,10
+11,customers,customers,,table,,grey,11
+12,subquery1_2,json_data1@subquery1_2,loans.end_date >= CURRENT_TIMESTAMP(),subquery,['payments.loan_id = loans.loan_id'],grey,12
+13,loans,loans,,table,,grey,13
+14,subquery1_1,json_data1@subquery1_1,"transactions.transaction_date >= DATE_ADD(CURRENT_TIMESTAMP(), -1, 'MONTH')",subquery,,grey,14
+15,transactions,transactions,,table,,grey,15
+16,CUSTOMER_BANK_DETAILS,CUSTOMER_BANK_DETAILS,"customers.join_date <= DATE_ADD(CURRENT_TIMESTAMP(), -1, 'YEAR')",target,"['customers.customer_id = accounts.customer_id', 'accounts.account_type_id = account_types.account_type_id', 'accounts.branch_id = branches.branch_id', 'accounts.account_id = subquery1_1.account_id', 'customers.customer_id = loans.customer_id', 'loans.loan_id = subquery1_2.loan_id']",grey,16
+17,accounts,accounts,,table,,grey,17
+18,subquery2_1,json_data2@subquery2_1,,subquery,,grey,18
+19,market_data,market_data,,table,,grey,19
+20,subquery1_4,json_data2@subquery1_4,,subquery,,grey,20
+21,trades,trades,,table,,grey,21
+22,subquery1_3,json_data2@subquery1_3,"market_data.market_date >= DATE_ADD(CURRENT_TIMESTAMP(), -1, 'YEAR')",subquery,['trades.stock_id = market_data.stock_id'],grey,22
+23,subquery1_2,json_data2@subquery1_2,"dividends.dividend_date >= DATE_ADD(CURRENT_TIMESTAMP(), -1, 'YEAR')",subquery,['trades.stock_id = dividends.stock_id'],grey,23
+24,dividends,dividends,,table,,grey,24
+25,subquery1_1,json_data2@subquery1_1,"trades.trade_date >= DATE_ADD(CURRENT_TIMESTAMP(), -1, 'MONTH')",subquery,['trades.stock_id = stocks.stock_id'],grey,25
+26,stocks,stocks,,table,,grey,26
+27,INVESTOR_OVERVIEW,INVESTOR_OVERVIEW,"investors.join_date <= DATE_ADD(CURRENT_TIMESTAMP(), -1, 'YEAR')",target,"['investors.investor_id = portfolios.investor_id', 'portfolios.portfolio_id = subquery1_1.portfolio_id', 'portfolios.portfolio_id = subquery1_2.portfolio_id', 'portfolios.portfolio_id = subquery1_3.portfolio_id', 'portfolios.portfolio_id = subquery1_4.portfolio_id']",grey,27
+28,investors,investors,,table,,grey,28
+29,portfolios,portfolios,,table,,grey,29
+30,subquery1_3,json_data3@subquery1_3,,subquery,,grey,30
+31,subscription_reviews,subscription_reviews,,table,,grey,31
+32,subquery1_2,json_data3@subquery1_2,"payments.payment_date >= DATE_ADD(CURRENT_TIMESTAMP(), -1, 'MONTH')",subquery,,grey,32
+33,subquery1_1,json_data3@subquery1_1,,subquery,,grey,33
+34,CUSTOMER_SUBSCRIPTION_DETAILS,CUSTOMER_SUBSCRIPTION_DETAILS,"customers.signup_date <= DATE_ADD(CURRENT_TIMESTAMP(), -1, 'MONTH')",target,"['customers.customer_id = subscriptions.customer_id', 'subscriptions.subscription_id = subquery1_1.subscription_id', 'subscriptions.subscription_id = subquery1_2.subscription_id', 'subscriptions.plan_id = subscription_plans.plan_id', 'subscriptions.subscription_id = subquery1_3.subscription_id']",grey,34
+35,subscriptions,subscriptions,,table,,grey,35
+36,subquery1_4,json_data4@subquery1_4,,subquery,,grey,36
+37,deliveries,deliveries,,table,,grey,37
+38,subquery1_3,json_data4@subquery1_3,,subquery,,grey,38
+39,product_reviews,product_reviews,,table,,grey,39
+40,subquery1_2,json_data4@subquery1_2,,subquery,"['delivery_items.product_id = products.product_id', 'products.category_id = categories.category_id']",grey,40
+41,delivery_items,delivery_items,,table,,grey,41
+42,subquery1_1,json_data4@subquery1_1,"deliveries.delivery_date >= DATE_ADD(CURRENT_TIMESTAMP(), -1, 'MONTH')",subquery,,grey,42
+43,VENDOR_PERFORMANCE_ANALYSIS,VENDOR_PERFORMANCE_ANALYSIS,"vendors.contract_start_date <= DATE_ADD(CURRENT_TIMESTAMP(), -1, 'YEAR')",target,"['vendors.vendor_id = subquery1_1.vendor_id', 'subquery1_1.delivery_id = subquery1_2.delivery_id', 'subquery1_2.product_id = subquery1_3.product_id', 'vendors.vendor_id = subquery1_4.vendor_id']",grey,43
+44,vendors,vendors,,table,,grey,44

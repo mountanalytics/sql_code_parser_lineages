@@ -1,0 +1,470 @@
+CREATE VIEW CUSTOMER_ORDER AS 
+SELECT
+    c.customer_id,
+    c.first_name,
+    c.last_name,
+    c.email,
+    recent_orders.order_id,
+    recent_orders.order_date,
+    recent_orders.total_order_amount,
+    recent_payments.total_payment_amount,
+    recent_order_items.product_name,
+    recent_order_items.category_name,
+    recent_order_items.quantity,
+    recent_order_items.unit_price,
+    recent_order_items.total_item_amount,
+    CAST(avg_product_rating.avg_rating AS DECIMAL(3,2)) AS avg_product_rating,
+    CAST(total_customer_spend.total_spent AS DECIMAL(10,2)) AS total_customer_spent
+FROM
+    customers c
+JOIN (
+    SELECT
+        o.order_id,
+        o.customer_id,
+        o.order_date,
+        o.total_amount AS total_order_amount
+    FROM
+        orders o
+    WHERE
+        o.order_date >= DATEADD(month, -1, GETDATE())
+        AND o.status = 'Completed'
+) recent_orders ON c.customer_id = recent_orders.customer_id
+JOIN (
+    SELECT
+        p.order_id,
+        SUM(p.payment_amount) AS total_payment_amount
+    FROM
+        payments p
+    GROUP BY
+        p.order_id
+) recent_payments ON recent_orders.order_id = recent_payments.order_id
+JOIN (
+    SELECT
+        oi.order_id,
+        p.product_name,
+        cat.category_name,
+        oi.quantity,
+        oi.unit_price,
+        (oi.quantity * oi.unit_price) AS total_item_amount
+    FROM
+        order_items oi
+    JOIN products p ON oi.product_id = p.product_id
+    JOIN categories cat ON p.category_id = cat.category_id
+) recent_order_items ON recent_orders.order_id = recent_order_items.order_id
+JOIN (
+    SELECT
+        r.product_id,
+        AVG(r.rating) AS avg_rating
+    FROM
+        reviews r
+    GROUP BY
+        r.product_id
+) avg_product_rating ON recent_order_items.product_id = avg_product_rating.product_id
+JOIN (
+    SELECT
+        o.customer_id,
+        SUM(o.total_amount) AS total_spent
+    FROM
+        orders o
+    WHERE
+        o.status = 'Completed'
+    GROUP BY
+        o.customer_id
+) total_customer_spend ON c.customer_id = total_customer_spend.customer_id
+WHERE
+    c.signup_date <= DATEADD(month, -1, GETDATE())
+ORDER BY
+    c.customer_id,
+    recent_orders.order_date;
+	
+	
+	
+CREATE VIEW CUSTOMER_BANK_DETAILS AS
+SELECT
+    c.customer_id,
+    c.first_name,
+    c.last_name,
+    c.email,
+    a.account_id,
+    a.balance,
+    at.account_type_name,
+    b.branch_name,
+    b.branch_city,
+    recent_transactions.total_transactions_amount,
+    l.loan_id,
+    l.loan_amount,
+    l.interest_rate,
+    CAST(total_interest_paid.total_interest AS DECIMAL(10,2)) AS total_interest_paid
+FROM
+    customers c
+JOIN accounts a ON c.customer_id = a.customer_id
+JOIN account_types at ON a.account_type_id = at.account_type_id
+JOIN branches b ON a.branch_id = b.branch_id
+JOIN (
+    SELECT
+        t.account_id,
+        SUM(t.amount) AS total_transactions_amount
+    FROM
+        transactions t
+    WHERE
+        t.transaction_date >= DATEADD(month, -1, GETDATE())
+    GROUP BY
+        t.account_id
+) recent_transactions ON a.account_id = recent_transactions.account_id
+JOIN loans l ON c.customer_id = l.customer_id
+JOIN (
+    SELECT
+        p.loan_id,
+        SUM(p.payment_amount * (l.interest_rate / 100 / 12)) AS total_interest
+    FROM
+        payments p
+    JOIN loans l ON p.loan_id = l.loan_id
+    WHERE
+        l.end_date >= GETDATE()
+    GROUP BY
+        p.loan_id, l.interest_rate
+) total_interest_paid ON l.loan_id = total_interest_paid.loan_id
+WHERE
+    c.join_date <= DATEADD(year, -1, GETDATE())
+ORDER BY
+    c.customer_id,
+    a.account_id;
+
+
+CREATE VIEW INVESTOR_OVERVIEW AS
+SELECT
+    i.investor_id,
+    i.first_name,
+    i.last_name,
+    i.email,
+    p.portfolio_id,
+    p.portfolio_name,
+    recent_trades.trade_id,
+    recent_trades.trade_date,
+    recent_trades.ticker,
+    recent_trades.company_name,
+    recent_trades.trade_type,
+    recent_trades.quantity,
+    recent_trades.price_per_share,
+    recent_trades.total_trade_value,
+    CAST(dividends_received.total_dividends AS DECIMAL(10,2)) AS total_dividends,
+    CAST(average_performance.avg_performance AS DECIMAL(10,2)) AS average_performance,
+    CAST(total_investment.total_value AS DECIMAL(10,2)) AS total_investment_value
+FROM
+    investors i
+JOIN portfolios p ON i.investor_id = p.investor_id
+JOIN (
+    SELECT
+        t.trade_id,
+        t.portfolio_id,
+        s.ticker,
+        s.company_name,
+        t.trade_date,
+        t.trade_type,
+        t.quantity,
+        t.price_per_share,
+        (t.quantity * t.price_per_share) AS total_trade_value
+    FROM
+        trades t
+    JOIN stocks s ON t.stock_id = s.stock_id
+    WHERE
+        t.trade_date >= DATEADD(month, -1, GETDATE())
+) recent_trades ON p.portfolio_id = recent_trades.portfolio_id
+JOIN (
+    SELECT
+        t.portfolio_id,
+        SUM(d.dividend_amount * t.quantity) AS total_dividends
+    FROM
+        trades t
+    JOIN dividends d ON t.stock_id = d.stock_id
+    WHERE
+        d.dividend_date >= DATEADD(year, -1, GETDATE())
+    GROUP BY
+        t.portfolio_id
+) dividends_received ON p.portfolio_id = dividends_received.portfolio_id
+JOIN (
+    SELECT
+        t.portfolio_id,
+        AVG(md.closing_price) AS avg_performance
+    FROM
+        trades t
+    JOIN market_data md ON t.stock_id = md.stock_id
+    WHERE
+        md.market_date >= DATEADD(year, -1, GETDATE())
+    GROUP BY
+        t.portfolio_id
+) average_performance ON p.portfolio_id = average_performance.portfolio_id
+JOIN (
+    SELECT
+        t.portfolio_id,
+        SUM(t.quantity * md.closing_price) AS total_value
+    FROM
+        trades t
+    JOIN market_data md ON t.stock_id = md.stock_id
+    WHERE
+        md.market_date = (SELECT MAX(market_date) FROM market_data)
+    GROUP BY
+        t.portfolio_id
+) total_investment ON p.portfolio_id = total_investment.portfolio_id
+WHERE
+    i.join_date <= DATEADD(year, -1, GETDATE())
+ORDER BY
+    i.investor_id,
+    p.portfolio_id;
+	
+	
+	
+	
+INSERT INTO PROCESS_DB.detailed_investor_info (
+    investor_id, first_name, last_name, email, join_date, portfolio_id, portfolio_name, 
+    account_id, account_balance, total_trades, total_trade_value, total_dividends,
+    avg_trade_value, max_trade_value, min_trade_value, stock_count, 
+    most_recent_trade_date, oldest_trade_date, avg_stock_price, total_investment_value
+)
+SELECT 
+    i.investor_id, i.first_name, i.last_name, i.email, i.join_date, 
+    p.portfolio_id, p.portfolio_name, 
+    a.account_id, a.balance AS account_balance,
+    COUNT(t.trade_id) AS total_trades, 
+    SUM(t.quantity * t.price_per_share) AS total_trade_value, 
+    SUM(d.dividend_amount * t.quantity) AS total_dividends,
+    AVG(t.quantity * t.price_per_share) AS avg_trade_value,
+    MAX(t.quantity * t.price_per_share) AS max_trade_value,
+    MIN(t.quantity * t.price_per_share) AS min_trade_value,
+    COUNT(DISTINCT t.stock_id) AS stock_count,
+    MAX(t.trade_date) AS most_recent_trade_date,
+    MIN(t.trade_date) AS oldest_trade_date,
+    AVG(md.closing_price) AS avg_stock_price,
+    SUM(t.quantity * md.closing_price) AS total_investment_value
+FROM 
+    SOURCE_DB.investors i
+JOIN 
+    SOURCE_DB.portfolios p ON i.investor_id = p.investor_id
+JOIN 
+    SOURCE_DB.accounts a ON p.portfolio_id = a.portfolio_id
+JOIN 
+    SOURCE_DB.trades t ON p.portfolio_id = t.portfolio_id
+JOIN 
+    SOURCE_DB.dividends d ON t.stock_id = d.stock_id
+JOIN 
+    SOURCE_DB.market_data md ON t.stock_id = md.stock_id
+WHERE 
+    i.join_date <= DATEADD(year, -1, GETDATE())
+GROUP BY 
+    i.investor_id, i.first_name, i.last_name, i.email, i.join_date, 
+    p.portfolio_id, p.portfolio_name, a.account_id, a.balance;
+
+
+INSERT INTO PROCESS_DB.portfolio_performance (
+    portfolio_id, investor_id, portfolio_name, 
+    total_trades_last_month, total_trade_value_last_month, 
+    total_dividends_last_year, avg_stock_performance_last_year, 
+    total_investment_value_current, most_active_stock, least_active_stock,
+    highest_trade_stock, lowest_trade_stock, max_single_trade_value,
+    min_single_trade_value, avg_single_trade_value, total_stock_count,
+    total_sectors, most_invested_sector, least_invested_sector, most_recent_trade_date, 
+    total_dividend_yield
+)
+SELECT 
+    p.portfolio_id, p.investor_id, p.portfolio_name, 
+    COUNT(t.trade_id) FILTER (WHERE t.trade_date >= DATEADD(month, -1, GETDATE())) AS total_trades_last_month, 
+    SUM(t.quantity * t.price_per_share) FILTER (WHERE t.trade_date >= DATEADD(month, -1, GETDATE())) AS total_trade_value_last_month, 
+    SUM(d.dividend_amount * t.quantity) FILTER (WHERE d.dividend_date >= DATEADD(year, -1, GETDATE())) AS total_dividends_last_year,
+    AVG(md.closing_price) FILTER (WHERE md.market_date >= DATEADD(year, -1, GETDATE())) AS avg_stock_performance_last_year,
+    SUM(t.quantity * md.closing_price) FILTER (WHERE md.market_date = (SELECT MAX(market_date) FROM SOURCE_DB.market_data)) AS total_investment_value_current,
+    (SELECT s.ticker FROM SOURCE_DB.trades t1 JOIN SOURCE_DB.stocks s ON t1.stock_id = s.stock_id WHERE t1.portfolio_id = p.portfolio_id GROUP BY s.ticker ORDER BY COUNT(t1.trade_id) DESC LIMIT 1) AS most_active_stock,
+    (SELECT s.ticker FROM SOURCE_DB.trades t1 JOIN SOURCE_DB.stocks s ON t1.stock_id = s.stock_id WHERE t1.portfolio_id = p.portfolio_id GROUP BY s.ticker ORDER BY COUNT(t1.trade_id) ASC LIMIT 1) AS least_active_stock,
+    (SELECT s.ticker FROM SOURCE_DB.trades t1 JOIN SOURCE_DB.stocks s ON t1.stock_id = s.stock_id WHERE t1.portfolio_id = p.portfolio_id GROUP BY s.ticker ORDER BY SUM(t1.quantity * t1.price_per_share) DESC LIMIT 1) AS highest_trade_stock,
+    (SELECT s.ticker FROM SOURCE_DB.trades t1 JOIN SOURCE_DB.stocks s ON t1.stock_id = s.stock_id WHERE t1.portfolio_id = p.portfolio_id GROUP BY s.ticker ORDER BY SUM(t1.quantity * t1.price_per_share) ASC LIMIT 1) AS lowest_trade_stock,
+    MAX(t.quantity * t.price_per_share) AS max_single_trade_value,
+    MIN(t.quantity * t.price_per_share) AS min_single_trade_value,
+    AVG(t.quantity * t.price_per_share) AS avg_single_trade_value,
+    COUNT(DISTINCT t.stock_id) AS total_stock_count,
+    COUNT(DISTINCT s.sector) AS total_sectors,
+    (SELECT s.sector FROM SOURCE_DB.trades t1 JOIN SOURCE_DB.stocks s ON t1.stock_id = s.stock_id WHERE t1.portfolio_id = p.portfolio_id GROUP BY s.sector ORDER BY SUM(t1.quantity * t1.price_per_share) DESC LIMIT 1) AS most_invested_sector,
+    (SELECT s.sector FROM SOURCE_DB.trades t1 JOIN SOURCE_DB.stocks s ON t1.stock_id = s.stock_id WHERE t1.portfolio_id = p.portfolio_id GROUP BY s.sector ORDER BY SUM(t1.quantity * t1.price_per_share) ASC LIMIT 1) AS least_invested_sector,
+    MAX(t.trade_date) AS most_recent_trade_date,
+    CASE 
+        WHEN SUM(md.closing_price) > 0 THEN SUM(d.dividend_amount * t.quantity) / SUM(md.closing_price)
+        ELSE 0 
+    END AS total_dividend_yield
+FROM 
+    SOURCE_DB.portfolios p
+JOIN 
+    SOURCE_DB.trades t ON p.portfolio_id = t.portfolio_id
+JOIN 
+    SOURCE_DB.stocks s ON t.stock_id = s.stock_id
+JOIN 
+    SOURCE_DB.dividends d ON t.stock_id = d.stock_id
+JOIN 
+    SOURCE_DB.market_data md ON t.stock_id = md.stock_id
+GROUP BY 
+    p.portfolio_id, p.investor_id, p.portfolio_name;
+
+INSERT INTO PROCESS_DB.stock_performance (
+    stock_id, ticker, company_name, sector, 
+    total_trades_last_month, total_trade_value_last_month, 
+    total_dividends_last_year, avg_closing_price_last_year, 
+    max_closing_price_last_year, min_closing_price_last_year, 
+    avg_volume_last_year, total_trade_volume_last_year,
+    most_active_investor, least_active_investor, highest_trade_investor,
+    lowest_trade_investor, total_investors, total_portfolios,
+    max_trade_value, min_trade_value, avg_trade_value
+)
+SELECT 
+    s.stock_id, s.ticker, s.company_name, s.sector, 
+    COUNT(t.trade_id) FILTER (WHERE t.trade_date >= DATEADD(month, -1, GETDATE())) AS total_trades_last_month, 
+    SUM(t.quantity * t.price_per_share) FILTER (WHERE t.trade_date >= DATEADD(month, -1, GETDATE())) AS total_trade_value_last_month, 
+    SUM(d.dividend_amount) FILTER (WHERE d.dividend_date >= DATEADD(year, -1, GETDATE())) AS total_dividends_last_year,
+    AVG(md.closing_price) FILTER (WHERE md.market_date >= DATEADD(year, -1, GETDATE())) AS avg_closing_price_last_year,
+    MAX(md.closing_price) FILTER (WHERE md.market_date >= DATEADD(year, -1, GETDATE())) AS max_closing_price_last_year,
+    MIN(md.closing_price) FILTER (WHERE md.market_date >= DATEADD(year, -1, GETDATE())) AS min_closing_price_last_year,
+    AVG(md.volume) FILTER (WHERE md.market_date >= DATEADD(year, -1, GETDATE())) AS avg_volume_last_year,
+    SUM(md.volume) FILTER (WHERE md.market_date >= DATEADD(year, -1, GETDATE())) AS total_trade_volume_last_year,
+    (SELECT i.investor_id FROM SOURCE_DB.trades t1 JOIN SOURCE_DB.portfolios p ON t1.portfolio_id = p.portfolio_id JOIN SOURCE_DB.investors i ON p.investor_id = i.investor_id WHERE t1.stock_id = s.stock_id GROUP BY i.investor_id ORDER BY COUNT(t1.trade_id) DESC LIMIT 1) AS most_active_investor,
+    (SELECT i.investor_id FROM SOURCE_DB.trades t1 JOIN SOURCE_DB.portfolios p ON t1.portfolio_id = p.portfolio_id JOIN SOURCE_DB.investors i ON p.investor_id = i.investor_id WHERE t1.stock_id = s.stock_id GROUP BY i.investor_id ORDER BY COUNT(t1.trade_id) ASC LIMIT 1) AS least_active_investor,
+    (SELECT i.investor_id FROM SOURCE_DB.trades t1 JOIN SOURCE_DB.portfolios p ON t1.portfolio_id = p.portfolio_id JOIN SOURCE_DB.investors i ON p.investor_id = i.investor_id WHERE t1.stock_id = s.stock_id GROUP BY i.investor_id ORDER BY SUM(t1.quantity * t1.price_per_share) DESC LIMIT 1) AS highest_trade_investor,
+    (SELECT i.investor_id FROM SOURCE_DB.trades t1 JOIN SOURCE_DB.portfolios p ON t1.portfolio_id = p.portfolio_id JOIN SOURCE_DB.investors i ON p.investor_id = i.investor_id WHERE t1.stock_id = s.stock_id GROUP BY i.investor_id ORDER BY SUM(t1.quantity * t1.price_per_share) ASC LIMIT 1) AS lowest_trade_investor,
+    COUNT(DISTINCT i.investor_id) AS total_investors,
+    COUNT(DISTINCT p.portfolio_id) AS total_portfolios,
+    MAX(t.quantity * t.price_per_share) AS max_trade_value,
+    MIN(t.quantity * t.price_per_share) AS min_trade_value,
+    AVG(t.quantity * t.price_per_share) AS avg_trade_value
+FROM 
+    SOURCE_DB.stocks s
+JOIN 
+    SOURCE_DB.trades t ON s.stock_id = t.stock_id
+JOIN 
+    SOURCE_DB.portfolios p ON t.portfolio_id = p.portfolio_id
+JOIN 
+    SOURCE_DB.investors i ON p.investor_id = i.investor_id
+JOIN 
+    SOURCE_DB.dividends d ON s.stock_id = d.stock_id
+JOIN 
+    SOURCE_DB.market_data md ON s.stock_id = md.stock_id
+GROUP BY 
+    s.stock_id, s.ticker, s.company_name, s.sector;
+
+
+
+INSERT INTO PROCESS_DB.dividend_analysis (
+    stock_id, ticker, company_name, 
+    total_dividends_paid_last_year, avg_dividend_yield_last_year, 
+    max_dividend_yield_last_year, min_dividend_yield_last_year, 
+    total_dividend_payments, avg_dividend_payment, max_dividend_payment, 
+    min_dividend_payment, total_investors, total_portfolios, 
+    most_dividend_received_investor, least_dividend_received_investor, 
+    total_investment_value_current, total_trade_volume_last_year, 
+    avg_closing_price_last_year, highest_trade_investor, lowest_trade_investor,
+    avg_trade_value
+)
+SELECT 
+    s.stock_id, s.ticker, s.company_name, 
+    SUM(d.dividend_amount * t.quantity) FILTER (WHERE d.dividend_date >= DATEADD(year, -1, GETDATE())) AS total_dividends_paid_last_year,
+    AVG(CASE WHEN md.closing_price > 0 THEN d.dividend_amount / md.closing_price ELSE 0 END) FILTER (WHERE d.dividend_date >= DATEADD(year, -1, GETDATE())) AS avg_dividend_yield_last_year,
+    MAX(CASE WHEN md.closing_price > 0 THEN d.dividend_amount / md.closing_price ELSE 0 END) FILTER (WHERE d.dividend_date >= DATEADD(year, -1, GETDATE())) AS max_dividend_yield_last_year,
+    MIN(CASE WHEN md.closing_price > 0 THEN d.dividend_amount / md.closing_price ELSE 0 END) FILTER (WHERE d.dividend_date >= DATEADD(year, -1, GETDATE())) AS min_dividend_yield_last_year,
+    COUNT(d.dividend_id) AS total_dividend_payments,
+    AVG(d.dividend_amount) AS avg_dividend_payment,
+    MAX(d.dividend_amount) AS max_dividend_payment,
+    MIN(d.dividend_amount) AS min_dividend_payment,
+    COUNT(DISTINCT i.investor_id) AS total_investors,
+    COUNT(DISTINCT p.portfolio_id) AS total_portfolios,
+    (SELECT i.investor_id FROM SOURCE_DB.trades t1 JOIN SOURCE_DB.portfolios p ON t1.portfolio_id = p.portfolio_id JOIN SOURCE_DB.investors i ON p.investor_id = i.investor_id WHERE t1.stock_id = s.stock_id GROUP BY i.investor_id ORDER BY SUM(d.dividend_amount * t1.quantity) DESC LIMIT 1) AS most_dividend_received_investor,
+    (SELECT i.investor_id FROM SOURCE_DB.trades t1 JOIN SOURCE_DB.portfolios p ON t1.portfolio_id = p.portfolio_id JOIN SOURCE_DB.investors i ON p.investor_id = i.investor_id WHERE t1.stock_id = s.stock_id GROUP BY i.investor_id ORDER BY SUM(d.dividend_amount * t1.quantity) ASC LIMIT 1) AS least_dividend_received_investor,
+    SUM(t.quantity * md.closing_price) FILTER (WHERE md.market_date = (SELECT MAX(market_date) FROM SOURCE_DB.market_data)) AS total_investment_value_current,
+    SUM(md.volume) FILTER (WHERE md.market_date >= DATEADD(year, -1, GETDATE())) AS total_trade_volume_last_year,
+    AVG(md.closing_price) FILTER (WHERE md.market_date >= DATEADD(year, -1, GETDATE())) AS avg_closing_price_last_year,
+    (SELECT i.investor_id FROM SOURCE_DB.trades t1 JOIN SOURCE_DB.portfolios p ON t1.portfolio_id = p.portfolio_id JOIN SOURCE_DB.investors i ON p.investor_id = i.investor_id WHERE t1.stock_id = s.stock_id GROUP BY i.investor_id ORDER BY SUM(t1.quantity * t1.price_per_share) DESC LIMIT 1) AS highest_trade_investor,
+    (SELECT i.investor_id FROM SOURCE_DB.trades t1 JOIN SOURCE_DB.portfolios p ON t1.portfolio_id = p.portfolio_id JOIN SOURCE_DB.investors i ON p.investor_id = i.investor_id WHERE t1.stock_id = s.stock_id GROUP BY i.investor_id ORDER BY SUM(t1.quantity * t1.price_per_share) ASC LIMIT 1) AS lowest_trade_investor,
+    AVG(t.quantity * t.price_per_share) AS avg_trade_value
+FROM 
+    SOURCE_DB.stocks s
+JOIN 
+    SOURCE_DB.trades t ON s.stock_id = t.stock_id
+JOIN 
+    SOURCE_DB.portfolios p ON t.portfolio_id = p.portfolio_id
+JOIN 
+    SOURCE_DB.investors i ON p.investor_id = i.investor_id
+JOIN 
+    SOURCE_DB.dividends d ON s.stock_id = d.stock_id
+JOIN 
+    SOURCE_DB.market_data md ON s.stock_id = md.stock_id
+GROUP BY 
+    s.stock_id, s.ticker, s.company_name;
+	
+INSERT INTO PROCESS_DB.market_data_analysis (
+    stock_id, ticker, sector, total_volume_last_year, 
+    avg_closing_price_last_year, max_closing_price_last_year, 
+    min_closing_price_last_year, total_trades, avg_trade_value, 
+    max_trade_value, min_trade_value, total_dividends_paid, 
+    avg_dividend_yield, highest_volume_day, lowest_volume_day, 
+    most_recent_closing_price, total_investors, total_portfolios, 
+    most_active_investor, least_active_investor
+)
+SELECT 
+    md.stock_id, s.ticker, s.sector, 
+    SUM(md.volume) FILTER (WHERE md.market_date >= DATEADD(year, -1, GETDATE())) AS total_volume_last_year,
+    AVG(md.closing_price) FILTER (WHERE md.market_date >= DATEADD(year, -1, GETDATE())) AS avg_closing_price_last_year,
+    MAX(md.closing_price) FILTER (WHERE md.market_date >= DATEADD(year, -1, GETDATE())) AS max_closing_price_last_year,
+    MIN(md.closing_price) FILTER (WHERE md.market_date >= DATEADD(year, -1, GETDATE())) AS min_closing_price_last_year,
+    COUNT(t.trade_id) AS total_trades,
+    AVG(t.quantity * t.price_per_share) AS avg_trade_value,
+    MAX(t.quantity * t.price_per_share) AS max_trade_value,
+    MIN(t.quantity * t.price_per_share) AS min_trade_value,
+    SUM(d.dividend_amount * t.quantity) AS total_dividends_paid,
+    AVG(CASE WHEN md.closing_price > 0 THEN d.dividend_amount / md.closing_price ELSE 0 END) AS avg_dividend_yield,
+    (SELECT md1.market_date FROM SOURCE_DB.market_data md1 WHERE md1.stock_id = md.stock_id ORDER BY md1.volume DESC LIMIT 1) AS highest_volume_day,
+    (SELECT md1.market_date FROM SOURCE_DB.market_data md1 WHERE md1.stock_id = md.stock_id ORDER BY md1.volume ASC LIMIT 1) AS lowest_volume_day,
+    (SELECT md1.closing_price FROM SOURCE_DB.market_data md1 WHERE md1.stock_id = md.stock_id ORDER BY md1.market_date DESC LIMIT 1) AS most_recent_closing_price,
+    COUNT(DISTINCT i.investor_id) AS total_investors,
+    COUNT(DISTINCT p.portfolio_id) AS total_portfolios,
+    (SELECT i.investor_id FROM SOURCE_DB.trades t1 JOIN SOURCE_DB.portfolios p ON t1.portfolio_id = p.portfolio_id JOIN SOURCE_DB.investors i ON p.investor_id = i.investor_id WHERE t1.stock_id = s.stock_id GROUP BY i.investor_id ORDER BY COUNT(t1.trade_id) DESC LIMIT 1) AS most_active_investor,
+    (SELECT i.investor_id FROM SOURCE_DB.trades t1 JOIN SOURCE_DB.portfolios p ON t1.portfolio_id = p.portfolio_id JOIN SOURCE_DB.investors i ON p.investor_id = i.investor_id WHERE t1.stock_id = s.stock_id GROUP BY i.investor_id ORDER BY COUNT(t1.trade_id) ASC LIMIT 1) AS least_active_investor
+FROM 
+    SOURCE_DB.market_data md
+JOIN 
+    SOURCE_DB.stocks s ON md.stock_id = s.stock_id
+JOIN 
+    SOURCE_DB.trades t ON s.stock_id = t.stock_id
+JOIN 
+    SOURCE_DB.portfolios p ON t.portfolio_id = p.portfolio_id
+JOIN 
+    SOURCE_DB.investors i ON p.investor_id = i.investor_id
+JOIN 
+    SOURCE_DB.dividends d ON s.stock_id = d.stock_id
+GROUP BY 
+    md.stock_id, s.ticker, s.sector;
+	
+	
+	INSERT INTO PROCESS_DB.sector_analysis (
+    sector, total_stocks, total_trade_value_last_year, 
+    avg_trade_value_last_year, max_trade_value_last_year, 
+    min_trade_value_last_year, total_dividends_paid, 
+    avg_dividend_yield_last_year, max_dividend_yield_last_year, 
+    min_dividend_yield_last_year, avg_stock_performance_last_year, 
+    max_stock_performance_last_year, min_stock_performance_last_year, 
+    total_investors, total_portfolios, total_trades_last_year, 
+    highest_trade_stock, lowest_trade_stock, 
+    most_active_investor, least_active_investor
+)
+SELECT 
+    s.sector, 
+    COUNT(DISTINCT s.stock_id) AS total_stocks,
+    SUM(t.quantity * t.price_per_share) FILTER (WHERE t.trade_date >= DATEADD(year, -1, GETDATE())) AS total_trade_value_last_year,
+    AVG(t.quantity * t.price_per_share) FILTER (WHERE t.trade_date >= DATEADD(year, -1, GETDATE())) AS avg_trade_value_last_year,
+    MAX(t.quantity * t.price_per_share) FILTER (WHERE t.trade_date >= DATEADD(year, -1, GETDATE())) AS max_trade_value_last_year,
+    MIN(t.quantity * t.price_per_share) FILTER (WHERE t.trade_date >= DATEADD(year, -1, GETDATE())) AS min_trade_value_last_year,
+    SUM(d.dividend_amount * t.quantity) AS total_dividends_paid,
+    AVG(CASE WHEN md.closing_price > 0 THEN d.dividend_amount / md.closing_price ELSE 0 END) FILTER (WHERE d.dividend_date >= DATEADD(year, -1, GETDATE())) AS avg_dividend_yield_last_year,
+    MAX(CASE WHEN md.closing_price > 0 THEN d.dividend_amount / md.closing_price ELSE 0 END) FILTER (WHERE d.dividend_date >= DATEADD(year, -1, GETDATE())) AS max_dividend_yield_last_year,
+    MIN(CASE WHEN md.closing_price > 0 THEN d.dividend_amount / md.closing_price ELSE 0 END) FILTER (WHERE d.dividend_date >= DATEADD(year, -1, GETDATE())) AS min_dividend_yield_last_year,
+    AVG(md.closing_price) FILTER (WHERE md.market_date >= DATEADD(year, -1, GETDATE())) AS avg_stock_performance_last_year,
+    MAX(md.closing_price) FILTER (WHERE md.market_date >= DATEADD(year, -1, GETDATE())) AS max_stock_performance_last_year,
+    MIN(md.closing_price) FILTER (WHERE md.market_date >= DATEADD(year, -1, GETDATE())) AS min_stock_performance_last_year,
+    COUNT(DISTINCT i.investor_id) AS total_investors,
+    COUNT(DISTINCT p.portfolio_id) AS total_portfolios,
+    COUNT(t.trade_id) FILTER (WHERE t.trade_date >= DATEADD(year, -1, GETDATE())) AS total_trades_last_year,
+    (SELECT s1.ticker FROM SOURCE_DB.trades t1 JOIN SOURCE_DB.stocks s1 ON t1.stock_id = s1.stock_id WHERE s1.sector = s.sector GROUP BY s1.ticker ORDER BY SUM(t1.quantity * t1.price_per_share)
+
+

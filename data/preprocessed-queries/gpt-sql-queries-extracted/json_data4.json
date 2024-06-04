@@ -1,0 +1,6 @@
+{
+    "modified_SQL_query": "CREATE VIEW CUSTOMER_TURNOVER_ANNUAL AS SELECT C.CustomerName, SUM(CASE WHEN YEAR(T.InvoiceDate) = 2013 THEN (T.UnitPrice * T.Quantity) ELSE 0 END) AS '2013' , SUM(CASE WHEN YEAR(T.InvoiceDate) = 2014 THEN (T.UnitPrice * T.Quantity) ELSE 0 END) AS '2014' , SUM(CASE WHEN YEAR(T.InvoiceDate) = 2015 THEN (T.UnitPrice * T.Quantity) ELSE 0 END) AS '2015', SUM(CASE WHEN YEAR(T.InvoiceDate) = 2016 THEN (T.UnitPrice * T.Quantity) ELSE 0 END) AS '2016' FROM subquery1_1 AS T, Sales.Customers AS C WHERE T.CustomerID = C.CustomerID GROUP BY CustomerName ORDER BY CustomerName",
+    "subquery_dictionary": {
+        "subquery1_1": "SELECT I.InvoiceID, I.CustomerID, I.InvoiceDate, IL.UnitPrice, IL.Quantity, IL.InvoiceLineID FROM Sales.Invoices AS I, Sales.InvoiceLines AS IL WHERE I.InvoiceID = IL.InvoiceID"
+    }
+}

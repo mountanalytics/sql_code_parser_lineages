@@ -1,0 +1,10 @@
+{
+    "modified_SQL_query": "CREATE VIEW CUSTOMER_ORDER AS SELECT c.customer_id, c.first_name, c.last_name, c.email, subquery1_1.order_id, subquery1_1.order_date, subquery1_1.total_order_amount, subquery1_2.total_payment_amount, subquery1_3.product_name, subquery1_3.category_name, subquery1_3.quantity, subquery1_3.unit_price, subquery1_3.total_item_amount, CAST(subquery1_4.avg_rating AS DECIMAL(3,2)) AS avg_product_rating, CAST(subquery1_5.total_spent AS DECIMAL(10,2)) AS total_customer_spent FROM customers c JOIN subquery1_1 ON c.customer_id = subquery1_1.customer_id JOIN subquery1_2 ON subquery1_1.order_id = subquery1_2.order_id JOIN subquery1_3 ON subquery1_1.order_id = subquery1_3.order_id JOIN subquery1_4 ON subquery1_3.product_id = subquery1_4.product_id JOIN subquery1_5 ON c.customer_id = subquery1_5.customer_id WHERE c.signup_date <= DATEADD(month, -1, GETDATE()) ORDER BY c.customer_id, subquery1_1.order_date",
+    "subquery_dictionary": {
+        "subquery1_1": "SELECT o.order_id, o.customer_id, o.order_date, o.total_amount AS total_order_amount FROM orders o WHERE o.order_date >= DATEADD(month, -1, GETDATE()) AND o.status = 'Completed'",
+        "subquery1_2": "SELECT p.order_id, SUM(p.payment_amount) AS total_payment_amount FROM payments p GROUP BY p.order_id",
+        "subquery1_3": "SELECT oi.order_id, p.product_name, cat.category_name, oi.quantity, oi.unit_price, (oi.quantity * oi.unit_price) AS total_item_amount FROM order_items oi JOIN products p ON oi.product_id = p.product_id JOIN categories cat ON p.category_id = cat.category_id",
+        "subquery1_4": "SELECT r.product_id, AVG(r.rating) AS avg_rating FROM reviews r GROUP BY r.product_id",
+        "subquery1_5": "SELECT o.customer_id, SUM(o.total_amount) AS total_spent FROM orders o WHERE o.status = 'Completed' GROUP BY o.customer_id"
+    }
+}

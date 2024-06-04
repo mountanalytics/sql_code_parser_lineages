@@ -1,0 +1,26 @@
+,index,SOURCE_COLUMNS,TARGET_COLUMN,TRANSFORMATION,FILE_NAME,ROW_ID,LINK_VALUE,SOURCE_NODE,TARGET_NODE,SOURCE_FIELD,TARGET_FIELD,COLOR
+0,0,deliveries.vendor_id,subquery1_4.vendor_id,,json_data4,0,1,37.0,36,vendor_id,vendor_id,aliceblue
+1,1,deliveries.total_amount,subquery1_4.total_spent,SUM(total_amount),json_data4,0,1,37.0,36,total_amount,total_spent,orangered
+2,2,product_reviews.product_id,subquery1_3.product_id,,json_data4,0,1,39.0,38,product_id,product_id,aliceblue
+3,3,product_reviews.rating,subquery1_3.avg_rating,AVG(rating),json_data4,0,1,39.0,38,rating,avg_rating,orangered
+4,4,d.delivery_id,subquery1_2.delivery_id,,json_data4,0,1,,40,delivery_id,delivery_id,aliceblue
+5,5,products.product_name,subquery1_2.product_name,,json_data4,0,1,6.0,40,product_name,product_name,aliceblue
+6,6,categories.category_name,subquery1_2.category_name,,json_data4,0,1,,40,category_name,category_name,aliceblue
+7,7,delivery_items.unit_price,subquery1_2.unit_price,,json_data4,0,1,41.0,40,unit_price,unit_price,aliceblue
+8,8,delivery_items.quantity_delivered,subquery1_2.quantity_delivered,,json_data4,0,1,41.0,40,quantity_delivered,quantity_delivered,aliceblue
+9,9,deliveries.vendor_id,subquery1_1.vendor_id,,json_data4,0,1,37.0,42,vendor_id,vendor_id,aliceblue
+10,10,deliveries.delivery_id,subquery1_1.delivery_id,,json_data4,0,1,37.0,42,delivery_id,delivery_id,aliceblue
+11,11,deliveries.delivery_date,subquery1_1.delivery_date,,json_data4,0,1,37.0,42,delivery_date,delivery_date,aliceblue
+12,12,deliveries.total_amount,subquery1_1.total_amount,,json_data4,0,1,37.0,42,total_amount,total_amount,aliceblue
+13,13,vendors.vendor_id,VENDOR_PERFORMANCE_ANALYSIS.vendor_id,,json_data4,0,1,44.0,43,vendor_id,vendor_id,aliceblue
+14,14,vendors.vendor_name,VENDOR_PERFORMANCE_ANALYSIS.vendor_name,,json_data4,0,1,44.0,43,vendor_name,vendor_name,aliceblue
+15,15,vendors.contact_email,VENDOR_PERFORMANCE_ANALYSIS.contact_email,,json_data4,0,1,44.0,43,contact_email,contact_email,aliceblue
+16,16,subquery1_1.delivery_id,VENDOR_PERFORMANCE_ANALYSIS.delivery_id,,json_data4,0,1,42.0,43,delivery_id,delivery_id,aliceblue
+17,17,subquery1_1.delivery_date,VENDOR_PERFORMANCE_ANALYSIS.delivery_date,,json_data4,0,1,42.0,43,delivery_date,delivery_date,aliceblue
+18,18,subquery1_1.total_amount,VENDOR_PERFORMANCE_ANALYSIS.total_amount,,json_data4,0,1,42.0,43,total_amount,total_amount,aliceblue
+19,19,subquery1_2.product_name,VENDOR_PERFORMANCE_ANALYSIS.product_name,,json_data4,0,1,40.0,43,product_name,product_name,aliceblue
+20,20,subquery1_2.category_name,VENDOR_PERFORMANCE_ANALYSIS.category_name,,json_data4,0,1,40.0,43,category_name,category_name,aliceblue
+21,21,subquery1_2.unit_price,VENDOR_PERFORMANCE_ANALYSIS.unit_price,,json_data4,0,1,40.0,43,unit_price,unit_price,aliceblue
+22,22,subquery1_2.quantity_delivered,VENDOR_PERFORMANCE_ANALYSIS.quantity_delivered,,json_data4,0,1,40.0,43,quantity_delivered,quantity_delivered,aliceblue
+23,23,subquery1_3.avg_rating,VENDOR_PERFORMANCE_ANALYSIS.avg_product_rating,"CAST(avg_rating AS NUMERIC(3, 2))",json_data4,0,1,38.0,43,avg_rating,avg_product_rating,orangered
+24,24,subquery1_4.total_spent,VENDOR_PERFORMANCE_ANALYSIS.total_spent,"CAST(total_spent AS NUMERIC(10, 2))",json_data4,0,1,36.0,43,total_spent,total_spent,orangered

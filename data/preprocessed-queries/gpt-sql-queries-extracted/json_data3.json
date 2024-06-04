@@ -1,0 +1,6 @@
+{
+    "modified_SQL_query": "CREATE VIEW CUSTOMER_TURNOVER_QUARTERLY AS SELECT C.CustomerName, SUM(CASE WHEN DATEPART(qq,T.InvoiceDate) = 1 THEN (T.UnitPrice * T.Quantity) ELSE 0 END) As Q1 , SUM(CASE WHEN DATEPART(qq,T.InvoiceDate) = 2 THEN (T.UnitPrice * T.Quantity) ELSE 0 END) AS Q2 , SUM(CASE WHEN DATEPART(qq,T.InvoiceDate) = 3 THEN (T.UnitPrice * T.Quantity) ELSE 0 END) AS Q3, SUM(CASE WHEN DATEPART(qq,T.InvoiceDate) = 4 THEN (T.UnitPrice * T.Quantity) ELSE 0 END) AS Q4 FROM subquery1_1 AS T, Sales.Customers AS C WHERE T.CustomerID = C.CustomerID AND YEAR(T.InvoiceDate) = @Year GROUP BY CustomerName ORDER BY CustomerName",
+    "subquery_dictionary": {
+        "subquery1_1": "SELECT I.InvoiceID, I.CustomerID, I.InvoiceDate, IL.UnitPrice, IL.Quantity, IL.InvoiceLineID FROM Sales.Invoices AS I, Sales.InvoiceLines AS IL WHERE I.InvoiceID = IL.InvoiceID"
+    }
+}

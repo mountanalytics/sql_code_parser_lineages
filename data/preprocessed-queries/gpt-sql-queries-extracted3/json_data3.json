@@ -1,0 +1,8 @@
+{
+    "modified_SQL_query": "CREATE VIEW CUSTOMER_SUBSCRIPTION_DETAILS AS SELECT c.customer_id, c.first_name, c.last_name, c.email, sub.subscription_id, sub.subscription_date, sub.plan_name, sub.plan_cost, sub.plan_duration, CAST(total_spend.total_spent AS DECIMAL(10,2)) AS total_spent, recent_payments.payment_date, recent_payments.payment_amount, sub_plan.plan_features, CAST(avg_review_rating.avg_rating AS DECIMAL(3,2)) AS avg_review_rating FROM customers c JOIN subscriptions sub ON c.customer_id = sub.customer_id JOIN subquery1_1 total_spend ON sub.subscription_id = total_spend.subscription_id JOIN subquery1_2 recent_payments ON sub.subscription_id = recent_payments.subscription_id JOIN subscription_plans sub_plan ON sub.plan_id = sub_plan.plan_id JOIN subquery1_3 avg_review_rating ON sub.subscription_id = avg_review_rating.subscription_id WHERE c.signup_date <= DATEADD(month, -1, GETDATE()) ORDER BY c.customer_id, sub.subscription_date",
+    "subquery_dictionary": {
+        "subquery1_1": "SELECT p.subscription_id, SUM(p.payment_amount) AS total_spent FROM payments p GROUP BY p.subscription_id",
+        "subquery1_2": "SELECT p.subscription_id, p.payment_date, p.payment_amount FROM payments p WHERE p.payment_date >= DATEADD(month, -1, GETDATE())",
+        "subquery1_3": "SELECT r.subscription_id, AVG(r.rating) AS avg_rating FROM subscription_reviews r GROUP BY r.subscription_id"
+    }
+}

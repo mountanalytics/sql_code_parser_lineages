@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkbox Form</title>
+    <style>
+        /* Ensure the chart div fills the entire right side of the viewport */
+        #chart {
+            position: fixed;
+            top: 0;
+            left: {{ form_width }}px; /* Adjust this value to leave space for the checkboxes */
+            width: calc(100% - {{ form_width -50 }}px); /* Adjust the width to fit the remaining space */
+            height: 100%;
+        }
+        /* Position the form containing checkboxes on the left side */
+        form {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: {{ form_width }}px; /* Adjust the width as needed */
+            height: 100%;
+            padding: 20px;
+			background-color: #f2f2f2;
+            box-sizing: border-box;
+        }
+        /* Style for the legend */
+        #legend {
+            position: fixed;
+            bottom: 20px; /* Adjust as needed */
+            left: 0;
+            width: {{ form_width }}px; /* Match the width of the form */
+            padding: 10px;
+            background-color: #f2f2f2;
+        }
+        /* Style for the colored boxes */
+        .colorBox {
+            display: inline-block;
+            width: 20px; /* Adjust as needed */
+            height: 20px; /* Adjust as needed */
+            margin-right: 5px; /* Adjust as needed */
+            border: 1px solid #ccc;
+            vertical-align: middle; /* Align text vertically */
+        }
+    </style>
+</head>
+<body>
+    <form action="/" method="post">
+		<strong>Calculationviews:</strong><br>
+		{% for option in options %}
+			<input type="checkbox" name="option" value="{{ option }}"> {{ option }}<br>
+		{% endfor %}
+		<strong>Analysis:</strong><br>
+		<input type="checkbox" name="stackedOverview" value="Stacked Overview"> Stacked Overview<br>
+		<input type="submit" value="Submit">
+	</form>
+    <!-- Legend for the checkboxes -->
+    <div id="legend">
+        <strong>Legend:</strong><br>
+        <span class="colorBox" style="background-color: #ff4500;"></span> <span style="vertical-align: middle;">Transformation</span><br>
+        <span class="colorBox" style="background-color: #f0f8ff;"></span> <span style="vertical-align: middle;">Data transmission</span><br>
+        <span class="colorBox" style="background-color: #1e90ff;"></span> <span style="vertical-align: middle;">Filter</span><br>
+        <span class="colorBox" style="background-color: #000000;"></span> <span style="vertical-align: middle;">Node</span><br>
+    </div>
+    <div id='chart' class='chart'></div>
+</body>
+<script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
+<script type='text/javascript'>
+  var graphs = {{ graphJSON | safe }};
+  Plotly.plot('chart', graphs, {});
+</script>
+
+</html>

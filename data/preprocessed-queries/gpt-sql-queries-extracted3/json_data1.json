@@ -1,0 +1,7 @@
+{
+    "modified_SQL_query": "CREATE VIEW CUSTOMER_BANK_DETAILS AS SELECT c.customer_id, c.first_name, c.last_name, c.email, a.account_id, a.balance, at.account_type_name, b.branch_name, b.branch_city, recent_transactions.total_transactions_amount, l.loan_id, l.loan_amount, l.interest_rate, CAST(total_interest_paid.total_interest AS DECIMAL(10,2)) AS total_interest_paid FROM customers c JOIN accounts a ON c.customer_id = a.customer_id JOIN account_types at ON a.account_type_id = at.account_type_id JOIN branches b ON a.branch_id = b.branch_id JOIN subquery1_1 recent_transactions ON a.account_id = recent_transactions.account_id JOIN loans l ON c.customer_id = l.customer_id JOIN subquery1_2 total_interest_paid ON l.loan_id = total_interest_paid.loan_id WHERE c.join_date <= DATEADD(year, -1, GETDATE()) ORDER BY c.customer_id, a.account_id",
+    "subquery_dictionary": {
+        "subquery1_1": "SELECT t.account_id, SUM(t.amount) AS total_transactions_amount FROM transactions t WHERE t.transaction_date >= DATEADD(month, -1, GETDATE()) GROUP BY t.account_id",
+        "subquery1_2": "SELECT p.loan_id, SUM(p.payment_amount * (l.interest_rate / 100 / 12)) AS total_interest FROM payments p JOIN loans l ON p.loan_id = l.loan_id WHERE l.end_date >= GETDATE() GROUP BY p.loan_id, l.interest_rate"
+    }
+}
