@@ -1,7 +1,6 @@
 from sqlglot import parse_one, exp
 from sqlglot.dialects.tsql import TSQL
 import pypyodbc as odbc
-odbc.lowercase = False
 import configparser
 import copy
 from collections import defaultdict
@@ -12,12 +11,15 @@ import configparser
 import os
 import json
 import re
-odbc.lowercase = False
+import sqlglot
 
 
-# Find all table names which have an empty space in them and storing them without the " " for later use.
-def find_table_w_spaces(ast):
-    table_names = list(ast.find_all(exp.Table))
+
+def find_table_w_spaces(tree: sqlglot.expressions):
+    """
+    Find all table names which have an empty space in them and storing them without the " " for later use, as sqlglot cannot parse them otherwise.
+    """
+    table_names = list(tree.find_all(exp.Table))
     space_table = []
     for element in table_names:
         if " " in element.name:
@@ -25,7 +27,10 @@ def find_table_w_spaces(ast):
     return space_table
 
 
-def extract_target_columns(tree):
+def extract_target_columns(tree: sqlglot.expressions.Select):
+    """
+    From the query in input, get all the columns from the select statement
+    """
     # extract target columns
     select_statement_big = tree.find_all(exp.Select) # find all select statements
 
@@ -43,13 +48,18 @@ def extract_target_columns(tree):
 
 # replace columns aliases
 def transformer_functions(node):
-    """Replaces column objects within the functions with simple column names"""
+    """
+    Replaces column objects within the functions with simple column names
+    """
     if isinstance(node, exp.Column):
         return parse_one(node.name)
     return node
 
 
-def extract_transformation(tree):
+def extract_transformation(tree: sqlglot.expressions.Select):
+    """
+    Function to extract possible transformation from columns
+    """
     # add possible transformation to columns
     transformations = []
 
@@ -62,19 +72,26 @@ def extract_transformation(tree):
     return transformations
 
 
-def split_at_last_as(input_string): # function to split transformation string at last " AS "
+def split_at_last_as(input_string: str):  
+    """
+    Function to split transformation string at last " AS ", as everything after the last " AS " is the alias, not the transformation
+    """
     split_point = input_string.rfind(' AS ')
     if split_point == -1:
         return input_string, ''
     return input_string[:split_point], input_string[split_point + 4:]
 
 
-def extract_source_target_transformation(target_columns, lineages, space_table, target_node_name):
-    # extract source columns
+def extract_source_target_transformation(target_columns :list, lineages: list, space_table:list, target_node_name:str):
+    """
+    Function that returns a list of dictionaries, in which each dictionary contains the list of source columns, the target column and the possible transformation
+    """
     for target_column in target_columns:
         source_columns = []
 
         for source_column in target_column[0]:
+
+            #parse the table and column info
             table = source_column.table
             catalog = source_column.catalog
             db = source_column.db
@@ -86,7 +103,6 @@ def extract_source_target_transformation(target_columns, lineages, space_table, 
 
             if catalog !="" and db !="":
                 source_column_complete = catalog + "." +  db +"." + table +"." +column
-                #matching = catalog + "." +  db +"." + table   
 
             elif catalog == "" and db == "":
                 source_column_complete = table +"." +column
@@ -99,16 +115,22 @@ def extract_source_target_transformation(target_columns, lineages, space_table, 
                 
         if source_columns != []:
             if 'AS' in target_column[1]: # if there is an alias, append formula and alias
-                lineages.append({'SOURCE_COLUMNS':source_columns, 'TARGET_COLUMN':f"{target_node_name}.{split_at_last_as(target_column[1])[1].strip()}", 'TRANSFORMATION':split_at_last_as(target_column[1])[0].strip()})
+                for col in source_columns:
+                    if split_at_last_as(target_column[1])[0].strip() not in col:
 
-               # lineages.append({'source_columns':source_columns, 'target_column':f"{target_node_name}.{target_column[1].split(' AS ')[-1].strip()}", 'transformation':target_column[1].split(' AS ')[0].strip()})
+                        lineages.append({'SOURCE_COLUMNS':source_columns, 'TARGET_COLUMN':f"{target_node_name}.{split_at_last_as(target_column[1])[1].strip()}", 'TRANSFORMATION':split_at_last_as(target_column[1])[0].strip()})
+                    else:
+                        lineages.append({'SOURCE_COLUMNS':source_columns, 'TARGET_COLUMN':f"{target_node_name}.{split_at_last_as(target_column[1])[1].strip()}", 'TRANSFORMATION': ""})
             else:
 
                 lineages.append({'SOURCE_COLUMNS':source_columns, 'TARGET_COLUMN':f'{target_node_name}.{source_columns[0].split(".")[-1]}', 'TRANSFORMATION': target_column[1]})
     return lineages
 
 
-def parse_table(table, table_alias_list, subquery=True):    
+def parse_table(table, table_alias_list, subquery=True):   
+    """
+    Function to parse all table information available (db, catalog...)
+    """ 
     #table = element.this.this
     #table_name = table.name
     #catalog =  table.catalog

@@ -26,7 +26,7 @@ def draw_sankey(name, path):
     df['source_to_target_transformation'] = df[['source_to_target','TRANSFORMATION']].apply(lambda x : '{}<br />Transformation: {}'.format(x[0],x[1]), axis=1)
 
     df_labels = pd.read_csv('data/output-tables/nodes.csv')
-    df_labels['hover_label'] = df_labels[['LABEL_NODE','WHERE']].apply(lambda x : '{}<br />Filter: {}'.format(x[0],x[1]), axis=1)
+    df_labels['hover_label'] = df_labels[['LABEL_NODE','WHERE', 'ON']].apply(lambda x : '{}<br />Filter: {}<br />On: {}'.format(x[0],x[1], x[2]), axis=1)
 
     fig = go.Figure(data=[go.Sankey(
         node = dict(

@@ -1,7 +1,6 @@
 from sqlglot import parse_one, exp
 from sqlglot.dialects.tsql import TSQL
 import pypyodbc as odbc
-odbc.lowercase = False
 import configparser
 import copy
 from collections import defaultdict
@@ -12,9 +11,13 @@ import configparser
 import os
 import json
 import re
-odbc.lowercase = False
+import sqlglot
 
-def parse_query(query):
+
+def parse_query(query: str):
+    """
+    Function to convert query string to a sqlglot parsed tree
+    """
     ast = parse_one(query, read="tsql")
     trial1 = repr(ast)
     return ast
@@ -22,6 +25,9 @@ def parse_query(query):
 
 # parse table name + table alias
 def parse_tables(table, table_alias_list, subquery=True):    
+    """
+    Function to parse all table information available (db, catalog...)
+    """ 
 
     if subquery == False:
         table_alias =  table.alias.strip()
@@ -58,9 +64,10 @@ def parse_tables(table, table_alias_list, subquery=True):
     table_alias_list.append(result)
     return result
 
-def get_tables(ast):
-    # Extract the table names and their aliases, used to reconstruct a tuple with structure (database+schema+name, alias )
-
+def get_tables(ast: sqlglot.expressions.Select):
+    """
+    Function to extract the table names and their aliases, used to reconstruct a tuple with structure (database+schema+name, alias )
+    """
     # find all tables
     table_alias = list(ast.find_all(exp.Table))
     alias_table = []
@@ -72,7 +79,7 @@ def get_tables(ast):
     return alias_table
 
 
-def replace_aliases(query):
+def replace_aliases(query:str):
     # replace aliases
     ast = parse_query(query)
 
@@ -89,6 +96,10 @@ def replace_aliases(query):
     return transformed_tree
 
 def get_statements(transformed_tree):
+    """
+    Function to extract from expression, join expression and where expression from query
+    """
+
     source_tables = []
     # from expression
     from_exp = list(transformed_tree.find_all(exp.From))
@@ -114,8 +125,10 @@ def get_statements(transformed_tree):
     return source_tables, where_exp
 
 
-def on_statement(select_statement):
-    """Function to extract the on condition from the join statements, (on column = column)"""
+def on_statement(select_statement: sqlglot.expressions.Select):
+    """
+    Function to extract the on condition from the join statements, (on column = column)
+    """
 
     # from expression
     joins = list(select_statement.find_all(exp.Join))

@@ -30,6 +30,8 @@ def get_files(path):
         extracted_string = file_name.split('-')[1]
         # Remove the file extension (.csv) by splitting again and taking the first part
         extracted_string = extracted_string.split('.')[0]
+
+        extracted_string = extracted_string#[:18] # truncate option name if too long
         # Append the extracted substring to the list
         options.append(extracted_string)
         try:
