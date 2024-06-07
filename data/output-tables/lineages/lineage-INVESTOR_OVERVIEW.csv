@@ -1,0 +1,40 @@
+,index,SOURCE_COLUMNS,TARGET_COLUMN,TRANSFORMATION,FILE_NAME,ROW_ID,LINK_VALUE,SOURCE_NODE,TARGET_NODE,SOURCE_FIELD,TARGET_FIELD,COLOR
+0,0,market_data.market_date,subquery_5.market_date,,json_data2,0,1,19.0,18,market_date,market_date,aliceblue
+1,1,trades.portfolio_id,subquery_4.portfolio_id,,json_data2,0,1,21.0,20,portfolio_id,portfolio_id,aliceblue
+2,2,trades.quantity,subquery_4.total_value,SUM(quantity * closing_price),json_data2,0,1,21.0,20,quantity,total_value,orangered
+3,2,market_data.closing_price,subquery_4.total_value,SUM(quantity * closing_price),json_data2,0,1,19.0,20,closing_price,total_value,orangered
+4,4,trades.portfolio_id,subquery_3.portfolio_id,,json_data2,0,1,21.0,22,portfolio_id,portfolio_id,aliceblue
+5,5,market_data.closing_price,subquery_3.avg_performance,AVG(closing_price),json_data2,0,1,19.0,22,closing_price,avg_performance,orangered
+6,6,trades.portfolio_id,subquery_2.portfolio_id,,json_data2,0,1,21.0,23,portfolio_id,portfolio_id,aliceblue
+7,7,dividends.dividend_amount,subquery_2.total_dividends,SUM(dividend_amount * quantity),json_data2,0,1,24.0,23,dividend_amount,total_dividends,orangered
+8,7,trades.quantity,subquery_2.total_dividends,SUM(dividend_amount * quantity),json_data2,0,1,21.0,23,quantity,total_dividends,orangered
+9,9,trades.trade_id,subquery_1.trade_id,,json_data2,0,1,21.0,25,trade_id,trade_id,aliceblue
+10,10,trades.portfolio_id,subquery_1.portfolio_id,,json_data2,0,1,21.0,25,portfolio_id,portfolio_id,aliceblue
+11,11,stocks.ticker,subquery_1.ticker,,json_data2,0,1,26.0,25,ticker,ticker,aliceblue
+12,12,stocks.company_name,subquery_1.company_name,,json_data2,0,1,26.0,25,company_name,company_name,aliceblue
+13,13,trades.trade_date,subquery_1.trade_date,,json_data2,0,1,21.0,25,trade_date,trade_date,aliceblue
+14,14,trades.trade_type,subquery_1.trade_type,,json_data2,0,1,21.0,25,trade_type,trade_type,aliceblue
+15,15,trades.quantity,subquery_1.quantity,,json_data2,0,1,21.0,25,quantity,quantity,aliceblue
+16,16,trades.price_per_share,subquery_1.price_per_share,,json_data2,0,1,21.0,25,price_per_share,price_per_share,aliceblue
+17,17,trades.quantity,subquery_1.total_trade_value,(quantity * price_per_share),json_data2,0,1,21.0,25,quantity,total_trade_value,orangered
+18,17,trades.price_per_share,subquery_1.total_trade_value,(quantity * price_per_share),json_data2,0,1,21.0,25,price_per_share,total_trade_value,orangered
+19,19,investors.investor_id,INVESTOR_OVERVIEW.investor_id,,json_data2,0,1,28.0,27,investor_id,investor_id,aliceblue
+20,20,investors.first_name,INVESTOR_OVERVIEW.first_name,,json_data2,0,1,28.0,27,first_name,first_name,aliceblue
+21,21,investors.last_name,INVESTOR_OVERVIEW.last_name,,json_data2,0,1,28.0,27,last_name,last_name,aliceblue
+22,22,investors.email,INVESTOR_OVERVIEW.email,,json_data2,0,1,28.0,27,email,email,aliceblue
+23,23,portfolios.portfolio_id,INVESTOR_OVERVIEW.portfolio_id,,json_data2,0,1,29.0,27,portfolio_id,portfolio_id,aliceblue
+24,24,portfolios.portfolio_name,INVESTOR_OVERVIEW.portfolio_name,,json_data2,0,1,29.0,27,portfolio_name,portfolio_name,aliceblue
+25,25,subquery_1.trade_id,INVESTOR_OVERVIEW.trade_id,,json_data2,0,1,25.0,27,trade_id,trade_id,aliceblue
+26,26,subquery_1.trade_date,INVESTOR_OVERVIEW.trade_date,,json_data2,0,1,25.0,27,trade_date,trade_date,aliceblue
+27,27,subquery_1.ticker,INVESTOR_OVERVIEW.ticker,,json_data2,0,1,25.0,27,ticker,ticker,aliceblue
+28,28,subquery_1.company_name,INVESTOR_OVERVIEW.company_name,,json_data2,0,1,25.0,27,company_name,company_name,aliceblue
+29,29,subquery_1.trade_type,INVESTOR_OVERVIEW.trade_type,,json_data2,0,1,25.0,27,trade_type,trade_type,aliceblue
+30,30,subquery_1.quantity,INVESTOR_OVERVIEW.quantity,,json_data2,0,1,25.0,27,quantity,quantity,aliceblue
+31,31,subquery_1.price_per_share,INVESTOR_OVERVIEW.price_per_share,,json_data2,0,1,25.0,27,price_per_share,price_per_share,aliceblue
+32,32,subquery_1.total_trade_value,INVESTOR_OVERVIEW.total_trade_value,,json_data2,0,1,25.0,27,total_trade_value,total_trade_value,aliceblue
+33,33,subquery_2.total_dividends,INVESTOR_OVERVIEW.total_dividends,"CAST(total_dividends AS NUMERIC(10, 2))",json_data2,0,1,23.0,27,total_dividends,total_dividends,orangered
+34,34,subquery_3.avg_performance,INVESTOR_OVERVIEW.average_performance,"CAST(avg_performance AS NUMERIC(10, 2))",json_data2,0,1,22.0,27,avg_performance,average_performance,orangered
+35,35,total_investment.total_value,INVESTOR_OVERVIEW.total_investment_value,"CAST(total_value AS NUMERIC(10, 2))",json_data2,0,1,,27,total_value,total_investment_value,orangered
+36,36,trades.portfolio_id,INVESTOR_OVERVIEW.portfolio_id,,json_data2,0,1,21.0,27,portfolio_id,portfolio_id,aliceblue
+37,37,trades.quantity,INVESTOR_OVERVIEW.total_value,SUM(quantity * closing_price),json_data2,0,1,21.0,27,quantity,total_value,orangered
+38,37,market_data.closing_price,INVESTOR_OVERVIEW.total_value,SUM(quantity * closing_price),json_data2,0,1,19.0,27,closing_price,total_value,orangered
