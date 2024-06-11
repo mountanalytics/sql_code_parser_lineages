@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, send_file
 import plotly.graph_objs as go
 from modules.sankey import sankey_plot
 from modules.sankey import Sankey_stacked
@@ -13,6 +13,7 @@ path = "data/output-tables/lineages"
 
 print(os.getcwd())
 print(os.listdir(path))
+app.config["UPLOAD_FOLDER"] = "report/"
 
 
 
@@ -64,6 +65,10 @@ def index():
 
     return render_template('index.html', options=options, graphJSON=plot_json, form_width=form_width)
 
+@app.route('/download', methods=['GET'])
+def download():
+    docx_file_path = app.config['UPLOAD_FOLDER'] + "MA_Rationalization_Model_Results.docx"
+    return send_file(docx_file_path, as_attachment=True)
 
 if __name__ == '__main__':
     app.run(debug=True)
