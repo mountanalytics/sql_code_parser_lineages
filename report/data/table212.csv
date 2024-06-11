@@ -1,0 +1,6 @@
+Calculation view,Node,Transformation,Complexity Score
+CUSTOMER_SUBSCRIPTION_DETAILS,json_data3@subquery1_3,TYPE_CONVERSION(avg_rating),3
+CUSTOMER_ORDER,json_data0@subquery1_4,TYPE_CONVERSION(avg_rating),3
+VENDOR_PERFORMANCE_ANALYSIS,json_data4@subquery1_3,TYPE_CONVERSION(avg_rating),3
+INVESTOR_OVERVIEW,json_data2@subquery1_4,TYPE_CONVERSION(total_value),3
+INVESTOR_OVERVIEW,json_data2@subquery1_3,TYPE_CONVERSION(avg_performance),3
