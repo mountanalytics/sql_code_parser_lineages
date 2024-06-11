@@ -1,33 +1,33 @@
 ,index,SOURCE_COLUMNS,TARGET_COLUMN,TRANSFORMATION,FILE_NAME,ROW_ID,LINK_VALUE,SOURCE_NODE,TARGET_NODE,SOURCE_FIELD,TARGET_FIELD,COLOR
-0,0,orders.customer_id,subquery_5.customer_id,,json_data0,0,1,1.0,0,customer_id,customer_id,aliceblue
-1,1,orders.total_amount,subquery_5.total_spent,SUM(total_amount),json_data0,0,1,1.0,0,total_amount,total_spent,orangered
-2,2,reviews.product_id,subquery_4.product_id,,json_data0,0,1,3.0,2,product_id,product_id,aliceblue
-3,3,reviews.rating,subquery_4.avg_rating,AVG(rating),json_data0,0,1,3.0,2,rating,avg_rating,orangered
-4,4,order_items.order_id,subquery_3.order_id,,json_data0,0,1,5.0,4,order_id,order_id,aliceblue
-5,5,products.product_name,subquery_3.product_name,,json_data0,0,1,6.0,4,product_name,product_name,aliceblue
-6,6,categories.category_name,subquery_3.category_name,,json_data0,0,1,,4,category_name,category_name,aliceblue
-7,7,order_items.quantity,subquery_3.quantity,,json_data0,0,1,5.0,4,quantity,quantity,aliceblue
-8,8,order_items.unit_price,subquery_3.unit_price,,json_data0,0,1,5.0,4,unit_price,unit_price,aliceblue
-9,9,order_items.quantity,subquery_3.total_item_amount,(quantity * unit_price),json_data0,0,1,5.0,4,quantity,total_item_amount,orangered
-10,9,order_items.unit_price,subquery_3.total_item_amount,(quantity * unit_price),json_data0,0,1,5.0,4,unit_price,total_item_amount,orangered
-11,11,payments.order_id,subquery_2.order_id,,json_data0,0,1,8.0,7,order_id,order_id,aliceblue
-12,12,payments.payment_amount,subquery_2.total_payment_amount,SUM(payment_amount),json_data0,0,1,8.0,7,payment_amount,total_payment_amount,orangered
-13,13,orders.order_id,subquery_1.order_id,,json_data0,0,1,1.0,9,order_id,order_id,aliceblue
-14,14,orders.customer_id,subquery_1.customer_id,,json_data0,0,1,1.0,9,customer_id,customer_id,aliceblue
-15,15,orders.order_date,subquery_1.order_date,,json_data0,0,1,1.0,9,order_date,order_date,aliceblue
-16,16,orders.total_amount,subquery_1.total_order_amount,,json_data0,0,1,1.0,9,total_amount,total_order_amount,aliceblue
-17,17,customers.customer_id,CUSTOMER_ORDER.customer_id,,json_data0,0,1,11.0,10,customer_id,customer_id,aliceblue
-18,18,customers.first_name,CUSTOMER_ORDER.first_name,,json_data0,0,1,11.0,10,first_name,first_name,aliceblue
-19,19,customers.last_name,CUSTOMER_ORDER.last_name,,json_data0,0,1,11.0,10,last_name,last_name,aliceblue
-20,20,customers.email,CUSTOMER_ORDER.email,,json_data0,0,1,11.0,10,email,email,aliceblue
-21,21,subquery_1.order_id,CUSTOMER_ORDER.order_id,,json_data0,0,1,9.0,10,order_id,order_id,aliceblue
-22,22,subquery_1.order_date,CUSTOMER_ORDER.order_date,,json_data0,0,1,9.0,10,order_date,order_date,aliceblue
-23,23,subquery_1.total_order_amount,CUSTOMER_ORDER.total_order_amount,,json_data0,0,1,9.0,10,total_order_amount,total_order_amount,aliceblue
-24,24,subquery_2.total_payment_amount,CUSTOMER_ORDER.total_payment_amount,,json_data0,0,1,7.0,10,total_payment_amount,total_payment_amount,aliceblue
-25,25,subquery_3.product_name,CUSTOMER_ORDER.product_name,,json_data0,0,1,4.0,10,product_name,product_name,aliceblue
-26,26,subquery_3.category_name,CUSTOMER_ORDER.category_name,,json_data0,0,1,4.0,10,category_name,category_name,aliceblue
-27,27,subquery_3.quantity,CUSTOMER_ORDER.quantity,,json_data0,0,1,4.0,10,quantity,quantity,aliceblue
-28,28,subquery_3.unit_price,CUSTOMER_ORDER.unit_price,,json_data0,0,1,4.0,10,unit_price,unit_price,aliceblue
-29,29,subquery_3.total_item_amount,CUSTOMER_ORDER.total_item_amount,,json_data0,0,1,4.0,10,total_item_amount,total_item_amount,aliceblue
-30,30,subquery_4.avg_rating,CUSTOMER_ORDER.avg_product_rating,"CAST(avg_rating AS NUMERIC(3, 2))",json_data0,0,1,2.0,10,avg_rating,avg_product_rating,orangered
-31,31,subquery_5.total_spent,CUSTOMER_ORDER.total_customer_spent,"CAST(total_spent AS NUMERIC(10, 2))",json_data0,0,1,0.0,10,total_spent,total_customer_spent,orangered
+0,0,orders.customer_id,subquery1_5.customer_id,,json_data0,0,1,1,0,customer_id,customer_id,aliceblue
+1,1,orders.total_amount,subquery1_5.total_spent,SUM(total_amount),json_data0,0,1,1,0,total_amount,total_spent,orangered
+2,2,reviews.product_id,subquery1_4.product_id,,json_data0,0,1,3,2,product_id,product_id,aliceblue
+3,3,reviews.rating,subquery1_4.avg_rating,AVG(rating),json_data0,0,1,3,2,rating,avg_rating,orangered
+4,4,order_items.order_id,subquery1_3.order_id,,json_data0,0,1,5,4,order_id,order_id,aliceblue
+5,5,products.product_name,subquery1_3.product_name,,json_data0,0,1,6,4,product_name,product_name,aliceblue
+6,6,categories.category_name,subquery1_3.category_name,,json_data0,0,1,47,4,category_name,category_name,aliceblue
+7,7,order_items.quantity,subquery1_3.quantity,,json_data0,0,1,5,4,quantity,quantity,aliceblue
+8,8,order_items.unit_price,subquery1_3.unit_price,,json_data0,0,1,5,4,unit_price,unit_price,aliceblue
+9,9,order_items.quantity,subquery1_3.total_item_amount,"(MUL(quantity, unit_price))",json_data0,0,1,5,4,quantity,total_item_amount,orangered
+10,9,order_items.unit_price,subquery1_3.total_item_amount,"(MUL(quantity, unit_price))",json_data0,0,1,5,4,unit_price,total_item_amount,orangered
+11,11,payments.order_id,subquery1_2.order_id,,json_data0,0,1,8,7,order_id,order_id,aliceblue
+12,12,payments.payment_amount,subquery1_2.total_payment_amount,SUM(payment_amount),json_data0,0,1,8,7,payment_amount,total_payment_amount,orangered
+13,13,orders.order_id,subquery1_1.order_id,,json_data0,0,1,1,9,order_id,order_id,aliceblue
+14,14,orders.customer_id,subquery1_1.customer_id,,json_data0,0,1,1,9,customer_id,customer_id,aliceblue
+15,15,orders.order_date,subquery1_1.order_date,,json_data0,0,1,1,9,order_date,order_date,aliceblue
+16,16,orders.total_amount,subquery1_1.total_order_amount,,json_data0,0,1,1,9,total_amount,total_order_amount,aliceblue
+17,17,customers.customer_id,CUSTOMER_ORDER.customer_id,,json_data0,0,1,11,10,customer_id,customer_id,aliceblue
+18,18,customers.first_name,CUSTOMER_ORDER.first_name,,json_data0,0,1,11,10,first_name,first_name,aliceblue
+19,19,customers.last_name,CUSTOMER_ORDER.last_name,,json_data0,0,1,11,10,last_name,last_name,aliceblue
+20,20,customers.email,CUSTOMER_ORDER.email,,json_data0,0,1,11,10,email,email,aliceblue
+21,21,subquery1_1.order_id,CUSTOMER_ORDER.order_id,,json_data0,0,1,9,10,order_id,order_id,aliceblue
+22,22,subquery1_1.order_date,CUSTOMER_ORDER.order_date,,json_data0,0,1,9,10,order_date,order_date,aliceblue
+23,23,subquery1_1.total_order_amount,CUSTOMER_ORDER.total_order_amount,,json_data0,0,1,9,10,total_order_amount,total_order_amount,aliceblue
+24,24,subquery1_2.total_payment_amount,CUSTOMER_ORDER.total_payment_amount,,json_data0,0,1,7,10,total_payment_amount,total_payment_amount,aliceblue
+25,25,subquery1_3.product_name,CUSTOMER_ORDER.product_name,,json_data0,0,1,4,10,product_name,product_name,aliceblue
+26,26,subquery1_3.category_name,CUSTOMER_ORDER.category_name,,json_data0,0,1,4,10,category_name,category_name,aliceblue
+27,27,subquery1_3.quantity,CUSTOMER_ORDER.quantity,,json_data0,0,1,4,10,quantity,quantity,aliceblue
+28,28,subquery1_3.unit_price,CUSTOMER_ORDER.unit_price,,json_data0,0,1,4,10,unit_price,unit_price,aliceblue
+29,29,subquery1_3.total_item_amount,CUSTOMER_ORDER.total_item_amount,,json_data0,0,1,4,10,total_item_amount,total_item_amount,aliceblue
+30,30,subquery1_4.avg_rating,CUSTOMER_ORDER.avg_product_rating,TYPE_CONVERSION(avg_rating),json_data0,0,1,2,10,avg_rating,avg_product_rating,orangered
+31,31,subquery1_5.total_spent,CUSTOMER_ORDER.total_customer_spent,TYPE_CONVERSION(total_spent),json_data0,0,1,0,10,total_spent,total_customer_spent,orangered
