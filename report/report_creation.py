@@ -213,66 +213,66 @@ table_creation(SummaryColumns, column_name, table22, title)
 
 #######################################################
 
-SummaryGraph = document.add_picture("data/data_calc_view.jpg", width=Inches(7))
-last_paragraph = document.paragraphs[-1] 
-last_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
-
-data = {
-    'SystemName': ['Data source', 'Calculation view'],
-    'Color': ['black', 'skyblue']
-}
-
-SystemSummary = pd.DataFrame(data)
-#Legend for systems
-document.add_heading('Legend:', level=3)
-
-Systems_Legend = document.add_table(rows = len(SystemSummary)*2, cols = 2)
-
-#adjust column width and row height
-Systems_Legend.autofit = False
-Systems_Legend.allow_autofit = False
-
-for cell in Systems_Legend.columns[0].cells:
-    cell.width = Inches(1)
-
-for cell in Systems_Legend.columns[1].cells:
-    cell.width = Inches(2)
-    
-for row in Systems_Legend.rows:
-    row.height = Inches(0.18)
-row_idx = 0
-
-for i in range(len(SystemSummary)*2):
-    Systems_Legend.rows[i].height_rule = WD_ROW_HEIGHT_RULE.EXACTLY
-
-data = {
-    'SystemName': ['Data source', 'Calculation view'],
-    'Color': ['black', 'skyblue']
-}
-
-SystemSummary = pd.DataFrame(data)
-
-# Loop through the DataFrame rows
-Name = ['SystemName']
-
-for _, row in SystemSummary[Name].iterrows():
-    # Increase the row index counter
-    # Add data from SummaryColumns to the table
-    for col_idx, value in enumerate(row):
-        Systems_Legend.cell(row_idx, col_idx =1).text = ('- ', value)
-    # Skip one row
-    row_idx += 2
-
-#Adding colors to the database
-for i in range(len(SystemSummary)):
-    #row 0
-    cell_xml_element0 = Systems_Legend.rows[0+2*i].cells[0]._tc
-    table_cell_properties0 = cell_xml_element0.get_or_add_tcPr()
-    shade_obj0 = OxmlElement('w:shd')
-    shade_obj0.set(qn('w:fill'), SystemSummary['Color'][i])
-    table_cell_properties0.append(shade_obj0)
-
-font_size(Systems_Legend, 10)
+#SummaryGraph = document.add_picture("data/data_calc_view.jpg", width=Inches(7))
+#last_paragraph = document.paragraphs[-1] 
+#last_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+#
+#data = {
+#    'SystemName': ['Data source', 'Calculation view'],
+#    'Color': ['black', 'skyblue']
+#}
+#
+#SystemSummary = pd.DataFrame(data)
+##Legend for systems
+#document.add_heading('Legend:', level=3)
+#
+#Systems_Legend = document.add_table(rows = len(SystemSummary)*2, cols = 2)
+#
+##adjust column width and row height
+#Systems_Legend.autofit = False
+#Systems_Legend.allow_autofit = False
+#
+#for cell in Systems_Legend.columns[0].cells:
+#    cell.width = Inches(1)
+#
+#for cell in Systems_Legend.columns[1].cells:
+#    cell.width = Inches(2)
+#    
+#for row in Systems_Legend.rows:
+#    row.height = Inches(0.18)
+#row_idx = 0
+#
+#for i in range(len(SystemSummary)*2):
+#    Systems_Legend.rows[i].height_rule = WD_ROW_HEIGHT_RULE.EXACTLY
+#
+#data = {
+#    'SystemName': ['Data source', 'Calculation view'],
+#    'Color': ['black', 'skyblue']
+#}
+#
+#SystemSummary = pd.DataFrame(data)
+#
+## Loop through the DataFrame rows
+#Name = ['SystemName']
+#
+#for _, row in SystemSummary[Name].iterrows():
+#    # Increase the row index counter
+#    # Add data from SummaryColumns to the table
+#    for col_idx, value in enumerate(row):
+#        Systems_Legend.cell(row_idx, col_idx =1).text = ('- ', value)
+#    # Skip one row
+#    row_idx += 2
+#
+##Adding colors to the database
+#for i in range(len(SystemSummary)):
+#    #row 0
+#    cell_xml_element0 = Systems_Legend.rows[0+2*i].cells[0]._tc
+#    table_cell_properties0 = cell_xml_element0.get_or_add_tcPr()
+#    shade_obj0 = OxmlElement('w:shd')
+#    shade_obj0.set(qn('w:fill'), SystemSummary['Color'][i])
+#    table_cell_properties0.append(shade_obj0)
+#
+#font_size(Systems_Legend, 10)
 #######################################################
 
 
@@ -285,114 +285,114 @@ font_size(Systems_Legend, 10)
 #title = 'Similarity between analysed calculation views'
 #table_creation(SummaryColumns, column_name, table23, title)
 #
-
-
-SummaryHeading = document.add_heading('Detailed analysis of the Q_AccountsPayable calculation view', level=1)
-SummaryHeading.alignment = WD_ALIGN_PARAGRAPH.CENTER
-emptyrowsloop(1)
-
-# Summary paragraph
-Summary = document.add_paragraph("In this section, we dissect the Q_AccountsPayable calculation view, examining its components in detail. We highlight and analyze all the transformations and data sources incorporated within this calculation view. Furthermore, we provide a snapshot of the complete technical lineage, showcasing joins, filters, and transformations to offer a comprehensive understanding of its functionality and structure.")
-emptyrowsloop(1)
-
-
-
-
-table31 = table31[table31['Calculation view'] == 'Q_AccountsPayable']
-SummaryColumns = ['Calculation view','Data source','Columns used','Columns in source','Percentage columns used']
-#adding column headers
-column_name = ['Calculation view','Data source','Columns used','Columns in source','Percentage columns used']
-title = 'Detailed data source usage Q_AccountsPayable calculation view'
-table_creation(SummaryColumns, column_name, table31, title)
-
-
-
-
-SummaryColumns = ['Transformation','Occurrences']
-#adding column headers
-column_name = ['Transformation','Occurrences']
-title = 'Transformations in the Q_AccountsPayable calculation view'
-table_creation(SummaryColumns, column_name, substring_df, title)
-
-
-#SummaryColumns = ['SOURCE_NODE', 'SOURCE_FIELD', 'TARGET_NODE', 'TARGET_FIELD', 'TRANSFORMATION', 'JOIN_ARGU', 'FILTER', 'Complexity_Score']
+#
+#
+#SummaryHeading = document.add_heading('Detailed analysis of the Q_AccountsPayable calculation view', level=1)
+#SummaryHeading.alignment = WD_ALIGN_PARAGRAPH.CENTER
+#emptyrowsloop(1)
+#
+## Summary paragraph
+#Summary = document.add_paragraph("In this section, we dissect the Q_AccountsPayable calculation view, examining its components in detail. We highlight and analyze all the transformations and data sources incorporated within this calculation view. Furthermore, we provide a snapshot of the complete technical lineage, showcasing joins, filters, and transformations to offer a comprehensive understanding of its functionality and structure.")
+#emptyrowsloop(1)
+#
+#
+#
+#
+#table31 = table31[table31['Calculation view'] == 'Q_AccountsPayable']
+#SummaryColumns = ['Calculation view','Data source','Columns used','Columns in source','Percentage columns used']
 ##adding column headers
-#column_name = ['Source node', 'Source column', 'Target node', 'Target column', 'transformation', 'Join arguments', 'Filter', 'Complexity score']
-#title = 'Summarised technical lineage for the Q_AccountsPayable calculation view'
-#table_creation(SummaryColumns, column_name, Data_final_tech, title)
-
-
-
-
-
-
-############################################################ FOURTH SECTION - Sankey diagrams
-
-document.add_heading('Sankey Diagrams', level=1)
-last_paragraph = document.paragraphs[-1] 
-last_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
-
-document.add_paragraph('This section contains the Q_AccountsPayable calculation view in a Sankey Diagram, giving you insights into the overall calculation view and the transformations as well as model-identified focus points of the view.')
-
-SummaryGraph = document.add_picture("data/sankey.jpg", width=Inches(7))
-last_paragraph = document.paragraphs[-1] 
-last_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
-
-data = {
-    'SystemName': ['Transformation', 'Data transmission', 'Filter', 'Node'],
-    'Color': ['orangered', 'aliceblue', 'dodgerblue', 'black']
-}
-
-SystemSummary = pd.DataFrame(data)
-#Legend for systems
-document.add_heading('Legend:', level=3)
-
-Systems_Legend = document.add_table(rows = len(SystemSummary)*2, cols = 2)
-
-#adjust column width and row height
-Systems_Legend.autofit = False
-Systems_Legend.allow_autofit = False
-
-for cell in Systems_Legend.columns[0].cells:
-    cell.width = Inches(1)
-
-for cell in Systems_Legend.columns[1].cells:
-    cell.width = Inches(2)
-    
-for row in Systems_Legend.rows:
-    row.height = Inches(0.18)
-row_idx = 0
-
-for i in range(len(SystemSummary)*2):
-    Systems_Legend.rows[i].height_rule = WD_ROW_HEIGHT_RULE.EXACTLY
-
-data = {
-    'SystemName': ['Transformation', 'Data transmission', 'Filter', 'Node'],
-    'Color': ['orangered', 'aliceblue', 'dodgerblue', 'black']
-}
-
-SystemSummary = pd.DataFrame(data)
-
-# Loop through the DataFrame rows
-Name = ['SystemName']
-
-for _, row in SystemSummary[Name].iterrows():
-    # Increase the row index counter
-    # Add data from SummaryColumns to the table
-    for col_idx, value in enumerate(row):
-        Systems_Legend.cell(row_idx, col_idx =1).text = ('- ', value)
-    # Skip one row
-    row_idx += 2
-
-#Adding colors to the database
-for i in range(len(SystemSummary)):
-    #row 0
-    cell_xml_element0 = Systems_Legend.rows[0+2*i].cells[0]._tc
-    table_cell_properties0 = cell_xml_element0.get_or_add_tcPr()
-    shade_obj0 = OxmlElement('w:shd')
-    shade_obj0.set(qn('w:fill'), SystemSummary['Color'][i])
-    table_cell_properties0.append(shade_obj0)
-
-font_size(Systems_Legend, 10)
-
+#column_name = ['Calculation view','Data source','Columns used','Columns in source','Percentage columns used']
+#title = 'Detailed data source usage Q_AccountsPayable calculation view'
+#table_creation(SummaryColumns, column_name, table31, title)
+#
+#
+#
+#
+#SummaryColumns = ['Transformation','Occurrences']
+##adding column headers
+#column_name = ['Transformation','Occurrences']
+#title = 'Transformations in the Q_AccountsPayable calculation view'
+#table_creation(SummaryColumns, column_name, substring_df, title)
+#
+#
+##SummaryColumns = ['SOURCE_NODE', 'SOURCE_FIELD', 'TARGET_NODE', 'TARGET_FIELD', 'TRANSFORMATION', 'JOIN_ARGU', 'FILTER', 'Complexity_Score']
+###adding column headers
+##column_name = ['Source node', 'Source column', 'Target node', 'Target column', 'transformation', 'Join arguments', 'Filter', 'Complexity score']
+##title = 'Summarised technical lineage for the Q_AccountsPayable calculation view'
+##table_creation(SummaryColumns, column_name, Data_final_tech, title)
+#
+#
+#
+#
+#
+#
+############################################################# FOURTH SECTION - Sankey diagrams
+#
+#document.add_heading('Sankey Diagrams', level=1)
+#last_paragraph = document.paragraphs[-1] 
+#last_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+#
+#document.add_paragraph('This section contains the Q_AccountsPayable calculation view in a Sankey Diagram, giving you insights into the overall calculation view and the transformations as well as model-identified focus points of the view.')
+#
+#SummaryGraph = document.add_picture("data/sankey.jpg", width=Inches(7))
+#last_paragraph = document.paragraphs[-1] 
+#last_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+#
+#data = {
+#    'SystemName': ['Transformation', 'Data transmission', 'Filter', 'Node'],
+#    'Color': ['orangered', 'aliceblue', 'dodgerblue', 'black']
+#}
+#
+#SystemSummary = pd.DataFrame(data)
+##Legend for systems
+#document.add_heading('Legend:', level=3)
+#
+#Systems_Legend = document.add_table(rows = len(SystemSummary)*2, cols = 2)
+#
+##adjust column width and row height
+#Systems_Legend.autofit = False
+#Systems_Legend.allow_autofit = False
+#
+#for cell in Systems_Legend.columns[0].cells:
+#    cell.width = Inches(1)
+#
+#for cell in Systems_Legend.columns[1].cells:
+#    cell.width = Inches(2)
+#    
+#for row in Systems_Legend.rows:
+#    row.height = Inches(0.18)
+#row_idx = 0
+#
+#for i in range(len(SystemSummary)*2):
+#    Systems_Legend.rows[i].height_rule = WD_ROW_HEIGHT_RULE.EXACTLY
+#
+#data = {
+#    'SystemName': ['Transformation', 'Data transmission', 'Filter', 'Node'],
+#    'Color': ['orangered', 'aliceblue', 'dodgerblue', 'black']
+#}
+#
+#SystemSummary = pd.DataFrame(data)
+#
+## Loop through the DataFrame rows
+#Name = ['SystemName']
+#
+#for _, row in SystemSummary[Name].iterrows():
+#    # Increase the row index counter
+#    # Add data from SummaryColumns to the table
+#    for col_idx, value in enumerate(row):
+#        Systems_Legend.cell(row_idx, col_idx =1).text = ('- ', value)
+#    # Skip one row
+#    row_idx += 2
+#
+##Adding colors to the database
+#for i in range(len(SystemSummary)):
+#    #row 0
+#    cell_xml_element0 = Systems_Legend.rows[0+2*i].cells[0]._tc
+#    table_cell_properties0 = cell_xml_element0.get_or_add_tcPr()
+#    shade_obj0 = OxmlElement('w:shd')
+#    shade_obj0.set(qn('w:fill'), SystemSummary['Color'][i])
+#    table_cell_properties0.append(shade_obj0)
+#
+#font_size(Systems_Legend, 10)
+#
 document.save("MA_Rationalization_Model_Results.docx")
