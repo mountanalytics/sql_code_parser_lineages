@@ -52,6 +52,6 @@ def draw_sankey(name, path):
     
         
     )])
-    fig.update_layout(font_size=10)
+    fig.update_layout(font_size=14)
     fig.update_layout(title = dict(text=title, font_size=20))
     return fig
