@@ -26,8 +26,8 @@ JOIN (
     FROM
         orders o
     WHERE
-        o.order_date >= DATEADD(month, -1, GETDATE())
-        AND o.status = 'Completed'
+        (o.order_date >= DATEADD(month, -1, GETDATE())
+        AND (o.status = 'Completed'))
 ) recent_orders ON c.customer_id = recent_orders.customer_id
 JOIN (
     SELECT

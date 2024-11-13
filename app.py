@@ -15,8 +15,6 @@ print(os.getcwd())
 print(os.listdir(path))
 app.config["UPLOAD_FOLDER"] = "report/"
 
-
-
 def get_files(path):
     """
     Function that returns a list of files available as option on the Flask frontend
@@ -32,13 +30,14 @@ def get_files(path):
         # Remove the file extension (.csv) by splitting again and taking the first part
         extracted_string = extracted_string.split('.')[0]
 
-        extracted_string = extracted_string#[:18] # truncate option name if too long
+        extracted_string = extracted_string # truncate option name if too long
         # Append the extracted substring to the list
         options.append(extracted_string)
         try:
             options.remove('merged')
         except:
             pass
+
     return options
 
 
@@ -57,11 +56,13 @@ def index():
             a = Sankey_stacked.sankey_stacked()
             plot_json = json.dumps(a, cls=plotly.utils.PlotlyJSONEncoder)
         else:
-            print(selected_options)
-            print(path)
+
             a = sankey_plot.draw_sankey(selected_options, path)
             plot_json = json.dumps(a, cls=plotly.utils.PlotlyJSONEncoder)
     form_width = 270
+
+
+    a.write_html("file_sankey.html")
 
     return render_template('index.html', options=options, graphJSON=plot_json, form_width=form_width)
 
@@ -71,4 +72,4 @@ def download():
     return send_file(docx_file_path, as_attachment=True)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5001)

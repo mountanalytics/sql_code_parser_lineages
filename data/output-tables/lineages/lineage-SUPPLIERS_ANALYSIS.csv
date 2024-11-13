@@ -1,0 +1,10 @@
+,SOURCE,TARGET,TRANSFORMATION,FILE_NAME,ROW_ID,LINK_VALUE,SOURCE_NODE,TARGET_NODE,SOURCE_FIELD,TARGET_FIELD,COLOR
+0,dbo.Suppliers.id,query_SUPPLIERS_ANALYSIS.id,,file_0,0,1,2,0,id,id,aliceblue
+1,query_SUPPLIERS_ANALYSIS.id,SUPPLIERS_ANALYSIS.id,,file_0,0,1,0,1,id,id,aliceblue
+2,dbo.Suppliers.Name,query_SUPPLIERS_ANALYSIS.Name,,file_0,0,1,2,0,Name,Name,aliceblue
+3,query_SUPPLIERS_ANALYSIS.Name,SUPPLIERS_ANALYSIS.NameSurname,dbo.Suppliers.Name,file_0,0,1,0,1,Name,NameSurname,orangered
+4,dbo.Suppliers.Entity,query_SUPPLIERS_ANALYSIS.Entity,,file_0,0,1,2,0,Entity,Entity,aliceblue
+5,query_SUPPLIERS_ANALYSIS.Entity,SUPPLIERS_ANALYSIS.Entity,,file_0,0,1,0,1,Entity,Entity,aliceblue
+6,dbo.Suppliers.Discount,query_SUPPLIERS_ANALYSIS.Discount,,file_0,0,1,2,0,Discount,Discount,aliceblue
+7,query_SUPPLIERS_ANALYSIS.Discount,SUPPLIERS_ANALYSIS.Discount,,file_0,0,1,0,1,Discount,Discount,aliceblue
+8,query_SUPPLIERS_ANALYSIS.Discount,SUPPLIERS_ANALYSIS.DiscountCategory,"IFTHENELSE(EQ(dbo.Suppliers.Discount, 0), 'C', EQ(dbo.Suppliers.Discount, 0.1), 'B', 'A')",file_0,0,1,0,1,Discount,DiscountCategory,orangered

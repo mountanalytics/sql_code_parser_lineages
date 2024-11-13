@@ -1,6 +1,0 @@
-{
-    "modified_SQL_query": "CREATE VIEW UNIT_PRICE AS SELECT MIN(MIL.InvoiceLineID) FROM Sales.InvoiceLines AS MIL WHERE MIL.InvoiceID = subquery1_1",
-    "subquery_dictionary": {
-        "subquery1_1": "SELECT MIN(I.InvoiceId) FROM Sales.Invoices AS I, Sales.InvoiceLines AS IL WHERE I.InvoiceID = IL.InvoiceID AND I.CustomerID = 1060"
-    }
-}

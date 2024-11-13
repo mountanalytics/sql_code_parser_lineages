@@ -1,9 +1,0 @@
-{
-    "modified_SQL_query": "CREATE VIEW VENDOR_PERFORMANCE_ANALYSIS AS SELECT v.vendor_id, v.vendor_name, v.contact_email, recent_deliveries.delivery_id, recent_deliveries.delivery_date, recent_deliveries.total_amount, product_summary.product_name, product_summary.category_name, product_summary.unit_price, product_summary.quantity_delivered, CAST(avg_product_rating.avg_rating AS DECIMAL(3,2)) AS avg_product_rating, CAST(total_spent.total_spent AS DECIMAL(10,2)) AS total_spent FROM vendors v JOIN subquery1_1 recent_deliveries ON v.vendor_id = recent_deliveries.vendor_id JOIN subquery1_2 product_summary ON recent_deliveries.delivery_id = product_summary.delivery_id JOIN subquery1_3 avg_product_rating ON product_summary.product_id = avg_product_rating.product_id JOIN subquery1_4 total_spent ON v.vendor_id = total_spent.vendor_id WHERE v.contract_start_date <= DATEADD(year, -1, GETDATE()) ORDER BY v.vendor_id, recent_deliveries.delivery_date",
-    "subquery_dictionary": {
-        "subquery1_1": "SELECT d.vendor_id, d.delivery_id, d.delivery_date, d.total_amount FROM deliveries d WHERE d.delivery_date >= DATEADD(month, -1, GETDATE())",
-        "subquery1_2": "SELECT d.delivery_id, p.product_name, c.category_name, di.unit_price, di.quantity_delivered FROM delivery_items di JOIN products p ON di.product_id = p.product_id JOIN categories c ON p.category_id = c.category_id",
-        "subquery1_3": "SELECT r.product_id, AVG(r.rating) AS avg_rating FROM product_reviews r GROUP BY r.product_id",
-        "subquery1_4": "SELECT d.vendor_id, SUM(d.total_amount) AS total_spent FROM deliveries d GROUP BY d.vendor_id"
-    }
-}

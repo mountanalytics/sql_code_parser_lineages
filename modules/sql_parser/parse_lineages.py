@@ -24,7 +24,8 @@ def find_table_w_spaces(tree: sqlglot.expressions):
     for element in table_names:
         if " " in element.name:
             space_table.append((element.name.replace(" ",""),element.name))
-    return space_table
+    return list(set(space_table)) # a list of tuples with table names paired (space removed original - original ) Eg. (OrderDetails, Order Details)
+
 
 
 def extract_target_columns(tree: sqlglot.expressions.Select):
@@ -82,7 +83,7 @@ def split_at_last_as(input_string: str):
     return input_string[:split_point], input_string[split_point + 4:]
 
 
-def extract_source_target_transformation(target_columns :list, lineages: list, space_table:list, target_node_name:str):
+def extract_source_target_transformation(target_columns :list, lineages: list, space_table:list, query_node_name:str, target_node_name:str):
     """
     Function that returns a list of dictionaries, in which each dictionary contains the list of source columns, the target column and the possible transformation
     """
@@ -112,18 +113,23 @@ def extract_source_target_transformation(target_columns :list, lineages: list, s
                 source_column_complete = catalog + "." + table +"." +column
 
             source_columns.append(source_column_complete)
+
                 
         if source_columns != []:
             if 'AS' in target_column[1]: # if there is an alias, append formula and alias
                 for col in source_columns:
                     if split_at_last_as(target_column[1])[0].strip() not in col:
 
-                        lineages.append({'SOURCE_COLUMNS':source_columns, 'TARGET_COLUMN':f"{target_node_name}.{split_at_last_as(target_column[1])[1].strip()}", 'TRANSFORMATION':split_at_last_as(target_column[1])[0].strip()})
-                    else:
-                        lineages.append({'SOURCE_COLUMNS':source_columns, 'TARGET_COLUMN':f"{target_node_name}.{split_at_last_as(target_column[1])[1].strip()}", 'TRANSFORMATION': ""})
-            else:
+                        lineages.append({'SOURCE_COLUMNS':split_at_last_as(target_column[1])[1].strip(), 'TARGET_COLUMN':f"{query_node_name}.{split_at_last_as(target_column[1])[1].strip()}", 'TRANSFORMATION':split_at_last_as(target_column[1])[0].strip()})
+                        lineages.append({'SOURCE_COLUMNS':f"{query_node_name}.{split_at_last_as(target_column[1])[1].strip()}", 'TARGET_COLUMN':f"{target_node_name}.{split_at_last_as(target_column[1])[1].strip()}", 'TRANSFORMATION':""})
 
-                lineages.append({'SOURCE_COLUMNS':source_columns, 'TARGET_COLUMN':f'{target_node_name}.{source_columns[0].split(".")[-1]}', 'TRANSFORMATION': target_column[1]})
+                    else:
+                        lineages.append({'SOURCE_COLUMNS':split_at_last_as(target_column[1])[1].strip().split('.')[-1], 'TARGET_COLUMN':f"{query_node_name}.{split_at_last_as(target_column[1])[1].strip()}", 'TRANSFORMATION': ""})
+                        lineages.append({'SOURCE_COLUMNS':f"{query_node_name}.{split_at_last_as(target_column[1])[1].strip()}", 'TARGET_COLUMN':f"{target_node_name}.{split_at_last_as(target_column[1])[1].strip()}", 'TRANSFORMATION':""})
+            
+            else:
+                lineages.append({'SOURCE_COLUMNS':source_columns[0].split(".")[-1], 'TARGET_COLUMN':f'{query_node_name}.{source_columns[0].split(".")[-1]}', 'TRANSFORMATION': target_column[1]})
+                lineages.append({'SOURCE_COLUMNS':f'{query_node_name}.{source_columns[0].split(".")[-1]}', 'TARGET_COLUMN':f'{target_node_name}.{source_columns[0].split(".")[-1]}', 'TRANSFORMATION': ""})
     return lineages
 
 

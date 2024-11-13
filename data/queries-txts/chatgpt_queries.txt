@@ -465,6 +465,6 @@ SELECT
     COUNT(DISTINCT i.investor_id) AS total_investors,
     COUNT(DISTINCT p.portfolio_id) AS total_portfolios,
     COUNT(t.trade_id) FILTER (WHERE t.trade_date >= DATEADD(year, -1, GETDATE())) AS total_trades_last_year,
-    (SELECT s1.ticker FROM SOURCE_DB.trades t1 JOIN SOURCE_DB.stocks s1 ON t1.stock_id = s1.stock_id WHERE s1.sector = s.sector GROUP BY s1.ticker ORDER BY SUM(t1.quantity * t1.price_per_share)
+    (SELECT s1.ticker FROM SOURCE_DB.trades t1 JOIN SOURCE_DB.stocks s1 ON t1.stock_id = s1.stock_id WHERE s1.sector = s.sector GROUP BY s1.ticker ORDER BY SUM(t1.quantity * t1.price_per_share))
 
 

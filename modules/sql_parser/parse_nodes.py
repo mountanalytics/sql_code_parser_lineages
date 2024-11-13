@@ -80,8 +80,9 @@ def get_tables(ast: sqlglot.expressions.Select):
 
 
 def replace_aliases(query:str):
-    # replace aliases
     ast = parse_query(query)
+
+    ast = list(ast.find_all(exp.Select))[0]
 
     alias_table = get_tables(ast)
     
@@ -95,6 +96,53 @@ def replace_aliases(query:str):
 
     return transformed_tree
 
+def extract_from_statements(tree, source_tables):
+    from_exp = list(tree.find_all(exp.From))
+    from_table =str(from_exp[0].this).split(' AS')[0] # table
+    source_tables.append(from_table)
+    return source_tables
+
+def extract_join_statements(tree, source_tables):
+    join_exp = list(tree.find_all(exp.Join))
+    if join_exp != []:
+        join_table = str(join_exp[0].this).split(' AS')[0] # table
+        source_tables.append(join_table)
+    else:
+        join_exp = None
+    return source_tables
+
+
+def extract_where_statements(tree):
+    where_exp = list(tree.find_all(exp.Where))
+    if where_exp != []:
+        where_exp = str(where_exp[0].this).split(' AS')[0]# table
+    else:
+        where_exp = None
+    return where_exp
+
+
+def extract_on_statements(tree):
+    """
+    Function to extract the on condition from the join statements, (on column = column)
+    """
+    # parse select statement
+    select = list(tree.find_all(exp.Select))[0]
+
+    # parse join statements
+    joins = list(select.find_all(exp.Join))
+    on_conditions = []
+    for join in joins:
+        try:
+            on_conditions.append(f"{list(join.find_all(exp.EQ))[0].this.table}.{list(join.find_all(exp.EQ))[0].this.this} = {list(join.find_all(exp.EQ))[0].expression.table}.{list(join.find_all(exp.EQ))[0].expression.this}")
+        except:
+            return []
+        
+    if joins != []:
+        return on_conditions
+    else:
+        return []
+
+
 def get_statements(transformed_tree):
     """
     Function to extract from expression, join expression and where expression from query
@@ -102,45 +150,18 @@ def get_statements(transformed_tree):
 
     source_tables = []
     # from expression
-    from_exp = list(transformed_tree.find_all(exp.From))
-    from_table =str(from_exp[0].this).split(' AS')[0] # table
-    source_tables.append(from_table)
+    source_tables = extract_from_statements(transformed_tree, source_tables)
 
     # join expression
-    join_exp = list(transformed_tree.find_all(exp.Join))
-    if join_exp != []:
-        join_table = str(join_exp[0].this).split(' AS')[0] # table
-        source_tables.append(join_table)
-    else:
-        join_exp = None
+    source_tables = extract_join_statements(transformed_tree, source_tables)
 
     # where expression
-    where_exp = list(transformed_tree.find_all(exp.Where))
-    if where_exp != []:
-        where_exp = str(where_exp[0].this).split(' AS')[0]# table
-    else:
-        where_exp = None
+    where_exp = extract_where_statements(transformed_tree)
+
+    # join expressions
+    on_exp = extract_on_statements(transformed_tree)
+
+    return source_tables, where_exp, on_exp
 
 
-    return source_tables, where_exp
-
-
-def on_statement(select_statement: sqlglot.expressions.Select):
-    """
-    Function to extract the on condition from the join statements, (on column = column)
-    """
-
-    # from expression
-    joins = list(select_statement.find_all(exp.Join))
-    on_conditions = []
-    for join in joins:
-        try:
-        
-            on_conditions.append(f"{list(join.find_all(exp.EQ))[0].this.table}.{list(join.find_all(exp.EQ))[0].this.this} = {list(join.find_all(exp.EQ))[0].expression.table}.{list(join.find_all(exp.EQ))[0].expression.this}")
-        except:
-            return []
-    if joins != []:
-        return on_conditions
-    else:
-        return []
 
