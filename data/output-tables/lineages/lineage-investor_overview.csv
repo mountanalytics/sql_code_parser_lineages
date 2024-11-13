@@ -4,16 +4,16 @@
 2,trades.portfolio_id,subquery_4.portfolio_id,,file_1,0,1,6,5,portfolio_id,portfolio_id,aliceblue
 3,subquery_4.portfolio_id,query_INVESTOR_OVERVIEW.portfolio_id,,file_1,0,1,5,12,portfolio_id,portfolio_id,aliceblue
 4,trades.quantity,subquery_4.quantity,,file_1,0,1,6,5,quantity,quantity,aliceblue
-5,"subquery_4.['quantity', 'closing_price']",query_INVESTOR_OVERVIEW.total_value,"SUM(MUL(trades.quantity, market_data.closing_price))",file_1,0,1,5,12,"['quantity', 'closing_price']",total_value,orangered
+5,"subquery_4.['quantity', 'closing_price']",query_INVESTOR_OVERVIEW.total_value,"SUM(MUL(quantity, closing_price))",file_1,0,1,5,12,"['quantity', 'closing_price']",total_value,orangered
 6,market_data.closing_price,subquery_4.closing_price,,file_1,0,1,4,5,closing_price,closing_price,aliceblue
 7,trades.portfolio_id,subquery_3.portfolio_id,,file_1,0,1,6,7,portfolio_id,portfolio_id,aliceblue
 8,subquery_3.portfolio_id,query_INVESTOR_OVERVIEW.portfolio_id,,file_1,0,1,7,12,portfolio_id,portfolio_id,aliceblue
 9,market_data.closing_price,subquery_3.closing_price,,file_1,0,1,4,7,closing_price,closing_price,aliceblue
-10,subquery_3.['closing_price'],query_INVESTOR_OVERVIEW.avg_performance,AVG(market_data.closing_price),file_1,0,1,7,12,['closing_price'],avg_performance,orangered
+10,subquery_3.['closing_price'],query_INVESTOR_OVERVIEW.avg_performance,AVG(closing_price),file_1,0,1,7,12,['closing_price'],avg_performance,orangered
 11,trades.portfolio_id,subquery_2.portfolio_id,,file_1,0,1,6,8,portfolio_id,portfolio_id,aliceblue
 12,subquery_2.portfolio_id,query_INVESTOR_OVERVIEW.portfolio_id,,file_1,0,1,8,12,portfolio_id,portfolio_id,aliceblue
 13,dividends.dividend_amount,subquery_2.dividend_amount,,file_1,0,1,9,8,dividend_amount,dividend_amount,aliceblue
-14,"subquery_2.['dividend_amount', 'quantity']",query_INVESTOR_OVERVIEW.total_dividends,"SUM(MUL(dividends.dividend_amount, trades.quantity))",file_1,0,1,8,12,"['dividend_amount', 'quantity']",total_dividends,orangered
+14,"subquery_2.['dividend_amount', 'quantity']",query_INVESTOR_OVERVIEW.total_dividends,"SUM(MUL(dividend_amount, quantity))",file_1,0,1,8,12,"['dividend_amount', 'quantity']",total_dividends,orangered
 15,trades.quantity,subquery_2.quantity,,file_1,0,1,6,8,quantity,quantity,aliceblue
 16,trades.trade_id,subquery_1.trade_id,,file_1,0,1,6,10,trade_id,trade_id,aliceblue
 17,subquery_1.trade_id,query_INVESTOR_OVERVIEW.trade_id,,file_1,0,1,10,12,trade_id,trade_id,aliceblue
@@ -31,7 +31,7 @@
 29,subquery_1.quantity,query_INVESTOR_OVERVIEW.quantity,,file_1,0,1,10,12,quantity,quantity,aliceblue
 30,trades.price_per_share,subquery_1.price_per_share,,file_1,0,1,6,10,price_per_share,price_per_share,aliceblue
 31,subquery_1.price_per_share,query_INVESTOR_OVERVIEW.price_per_share,,file_1,0,1,10,12,price_per_share,price_per_share,aliceblue
-32,"subquery_1.['quantity', 'price_per_share']",query_INVESTOR_OVERVIEW.total_trade_value,"(MUL(trades.quantity, trades.price_per_share))",file_1,0,1,10,12,"['quantity', 'price_per_share']",total_trade_value,orangered
+32,"subquery_1.['quantity', 'price_per_share']",query_INVESTOR_OVERVIEW.total_trade_value,"(MUL(quantity, price_per_share))",file_1,0,1,10,12,"['quantity', 'price_per_share']",total_trade_value,orangered
 33,investors.investor_id,query_INVESTOR_OVERVIEW.investor_id,,file_1,0,1,14,12,investor_id,investor_id,aliceblue
 34,query_INVESTOR_OVERVIEW.investor_id,INVESTOR_OVERVIEW.investor_id,,file_1,0,1,12,13,investor_id,investor_id,aliceblue
 35,investors.first_name,query_INVESTOR_OVERVIEW.first_name,,file_1,0,1,14,12,first_name,first_name,aliceblue
@@ -52,6 +52,6 @@
 50,query_INVESTOR_OVERVIEW.quantity,INVESTOR_OVERVIEW.quantity,,file_1,0,1,12,13,quantity,quantity,aliceblue
 51,query_INVESTOR_OVERVIEW.price_per_share,INVESTOR_OVERVIEW.price_per_share,,file_1,0,1,12,13,price_per_share,price_per_share,aliceblue
 52,query_INVESTOR_OVERVIEW.total_trade_value,INVESTOR_OVERVIEW.total_trade_value,,file_1,0,1,12,13,total_trade_value,total_trade_value,aliceblue
-53,query_INVESTOR_OVERVIEW.['total_dividends'],INVESTOR_OVERVIEW.total_dividends,TYPE_CONVERSION(subquery_2.total_dividends),file_1,0,1,12,13,['total_dividends'],total_dividends,orangered
-54,query_INVESTOR_OVERVIEW.['avg_performance'],INVESTOR_OVERVIEW.average_performance,TYPE_CONVERSION(subquery_3.avg_performance),file_1,0,1,12,13,['avg_performance'],average_performance,orangered
-55,query_INVESTOR_OVERVIEW.['total_value'],INVESTOR_OVERVIEW.total_investment_value,TYPE_CONVERSION(subquery_4.total_value),file_1,0,1,12,13,['total_value'],total_investment_value,orangered
+53,query_INVESTOR_OVERVIEW.['total_dividends'],INVESTOR_OVERVIEW.total_dividends,TYPE_CONVERSION(total_dividends),file_1,0,1,12,13,['total_dividends'],total_dividends,orangered
+54,query_INVESTOR_OVERVIEW.['avg_performance'],INVESTOR_OVERVIEW.average_performance,TYPE_CONVERSION(avg_performance),file_1,0,1,12,13,['avg_performance'],average_performance,orangered
+55,query_INVESTOR_OVERVIEW.['total_value'],INVESTOR_OVERVIEW.total_investment_value,TYPE_CONVERSION(total_value),file_1,0,1,12,13,['total_value'],total_investment_value,orangered

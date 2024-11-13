@@ -39,14 +39,13 @@ def extract_target_columns(tree: sqlglot.expressions.Select):
     return select_statement, target_columns
 
 
-# replace columns aliases
-#def transformer_functions(node):
-#    """
-#    Replaces column objects within the functions with simple column names
-#    """
-#    if isinstance(node, exp.Column):
-#        return parse_one(node.name)
-#    return node
+def transformer_functions(node):
+    """
+    Replaces column objects within the functions with simple column names
+    """
+    if isinstance(node, exp.Column):
+        return parse_one(node.name)
+    return node
 
 
 def extract_transformation(tree: sqlglot.expressions.Select):
@@ -75,88 +74,10 @@ def split_at_last_as(input_string: str):
     return input_string[:split_point], input_string[split_point + 4:]
 
 
-#def extract_source_target_transformation(target_columns :list, lineages: list, space_table:list, query_node_name:str, target_node_name:str):
-#    """
-#    Returns a list of dictionaries, in which each dictionary contains the list of source columns, the target column and the possible transformation
-#    """
-#    for target_column in target_columns:
-#        source_columns = []
-#
-#        for source_column in target_column[0]:
-#
-#            #parse the table and column info
-#            table = source_column.table
-#            catalog = source_column.catalog
-#            db = source_column.db
-#            column = source_column.name
-#
-#            for w in space_table:
-#                if table == w[0]:
-#                    table = w[1]
-#
-#            if catalog !="" and db !="":
-#                source_column_complete = catalog + "." +  db +"." + table +"." +column
-#
-#            elif catalog == "" and db == "":
-#                source_column_complete = table +"." +column
-#            elif catalog == "":    
-#                source_column_complete = db + "." + table + "."+column
-#            elif db == "":
-#                source_column_complete = catalog + "." + table +"." +column
-#
-#            source_columns.append(source_column_complete)
-#                
-#        if source_columns != []:
-#            if 'AS' in target_column[1]: # if there is an alias, append formula and alias
-#                for col in source_columns:
-#                    if split_at_last_as(target_column[1])[0].strip() not in col:
-#                        lineages.append({'SOURCE_COLUMNS':split_at_last_as(target_column[1])[1].strip(), 'TARGET_COLUMN':f"{query_node_name}.{split_at_last_as(target_column[1])[1].strip()}", 'TRANSFORMATION':split_at_last_as(target_column[1])[0].strip()})
-#                        lineages.append({'SOURCE_COLUMNS':f"{query_node_name}.{split_at_last_as(target_column[1])[1].strip()}", 'TARGET_COLUMN':f"{target_node_name}.{split_at_last_as(target_column[1])[1].strip()}", 'TRANSFORMATION':""})
-#                    else:
-#                        lineages.append({'SOURCE_COLUMNS':split_at_last_as(target_column[1])[1].strip().split('.')[-1], 'TARGET_COLUMN':f"{query_node_name}.{split_at_last_as(target_column[1])[1].strip()}", 'TRANSFORMATION': ""})
-#                        lineages.append({'SOURCE_COLUMNS':f"{query_node_name}.{split_at_last_as(target_column[1])[1].strip()}", 'TARGET_COLUMN':f"{target_node_name}.{split_at_last_as(target_column[1])[1].strip()}", 'TRANSFORMATION':""})    
-#            else:
-#                lineages.append({'SOURCE_COLUMNS':source_columns[0].split(".")[-1], 'TARGET_COLUMN':f'{query_node_name}.{source_columns[0].split(".")[-1]}', 'TRANSFORMATION': target_column[1]})
-#                lineages.append({'SOURCE_COLUMNS':f'{query_node_name}.{source_columns[0].split(".")[-1]}', 'TARGET_COLUMN':f'{target_node_name}.{source_columns[0].split(".")[-1]}', 'TRANSFORMATION': ""})
-#    return lineages
-
-
-#def parse_table(table, table_alias_list, subquery=True):   
-#    """
-#    Parses all table information available (db, catalog...)
-#    """ 
-#
-#    if subquery == False:
-#        table_alias =  table.alias
-#        table_name = table.name
-#        table_db = table.db
-#        table_catalog = table.catalog
-#    else:
-#        table_alias = table.alias
-#        source = table.this.args["from"]
-#        table_name= source.this.name
-#        table_catalog =  source.this.catalog
-#        table_db = source.this.db
-#        
-#    if " " in table_name:
-#        table_name = table_name.replace(" ", "")
-#
-#    if table_catalog == "":    
-#        result = (table_db+"."+table_name, table_alias)
-#    elif table_db == "":
-#        result = (table_catalog+"."+table_name, table_alias)
-#    else:
-#        result = (table_catalog+"."+ table_db+"."+table_name, table_alias)
-#
-#    table_alias_list.append(result)
-#    return result
-
-
 def get_next_nodes(query:dict, component:str, destination:str):
     """
     Extracts the next node in line and the query node
     """
-
     # next node in case of subquery in subquery, subquery in main_query or main_query
     if "subquery" in component:
         for key, value in query.items():
@@ -167,7 +88,6 @@ def get_next_nodes(query:dict, component:str, destination:str):
                 else: # subquery in main_query
                     query_node=component
                     target_node = f'query_{destination}'
-
     else: # main_query
         query_node = f'query_{destination}'
         target_node =  destination
@@ -249,23 +169,21 @@ def extract_lineages(preprocessed_queries:list, nodes:pd.DataFrame) -> list:
         lineages = []
         filename = f"file_{idx}"
         destination =  list(parse_query(query['main_query']).find_all(exp.Create))[0].this.this.this
+        # insert into try except goes here
 
         for component in query.keys(): # for query component (sub/main queries) in query
             target_columns =[]
-
-            # preprocess query
+            # preprocess query and extract all useful information
             ast = parse_query(query[component])
             space_table = find_table_w_spaces(ast) # list with tables with spaces (sqlglot cant parse them)
             alias_table = get_tables(ast) # parse table name + table alias
-            tree = replace_aliases(query[component]) # transform query by removing table aliases
+            tree = replace_aliases(query[component]) # remove table aliases
             select_statement, target_columns = extract_target_columns(tree) # extract target columns
+            select_statement = [x.transform(transformer_functions) for x in select_statement] # remove column aliases
             transformations = extract_transformation(select_statement)
             target_columns = list(zip(target_columns, transformations)) 
             query_node, target_node = get_next_nodes(query, component, destination)
-
             lineages = extract_lineage(lineages, target_columns, query_node, target_node)
-
-        
 
         lineages_df = create_lineages_df(lineages, nodes, filename, destination)
         lineages_dfs.append(lineages_df)
