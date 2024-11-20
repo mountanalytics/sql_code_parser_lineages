@@ -89,3 +89,291 @@ WHERE
 ORDER BY
     i.investor_id,
     p.portfolio_id;
+
+
+
+
+
+CREATE VIEW CUSTOMER_ORDER AS 
+SELECT
+    c.customer_id,
+    c.first_name,
+    c.last_name,
+    c.email,
+    recent_orders.order_id,
+    recent_orders.order_date,
+    recent_orders.total_order_amount,
+    recent_payments.total_payment_amount,
+    recent_order_items.product_name,
+    recent_order_items.category_name,
+    recent_order_items.quantity,
+    recent_order_items.unit_price,
+    recent_order_items.total_item_amount,
+    CAST(avg_product_rating.avg_rating AS DECIMAL(3,2)) AS avg_product_rating,
+    CAST(total_customer_spend.total_spent AS DECIMAL(10,2)) AS total_customer_spent
+FROM
+    customers c
+JOIN (
+    SELECT
+        o.order_id,
+        o.customer_id,
+        o.order_date,
+        o.total_amount AS total_order_amount
+    FROM
+        orders o
+    WHERE
+        o.order_date >= DATEADD(month, -1, GETDATE())
+) recent_orders ON c.customer_id = recent_orders.customer_id
+JOIN (
+    SELECT
+        p.order_id,
+        SUM(p.payment_amount) AS total_payment_amount
+    FROM
+        payments p
+    GROUP BY
+        p.order_id
+) recent_payments ON recent_orders.order_id = recent_payments.order_id
+JOIN (
+    SELECT
+        oi.order_id,
+        p.product_name,
+        cat.category_name,
+        oi.quantity,
+        oi.unit_price,
+        (oi.quantity * oi.unit_price) AS total_item_amount
+    FROM
+        order_items oi
+    JOIN products p ON oi.product_id = p.product_id
+    JOIN categories cat ON p.category_id = cat.category_id
+) recent_order_items ON recent_orders.order_id = recent_order_items.order_id
+JOIN (
+    SELECT
+        r.product_id,
+        AVG(r.rating) AS avg_rating
+    FROM
+        reviews r
+    GROUP BY
+        r.product_id
+) avg_product_rating ON recent_order_items.product_id = avg_product_rating.product_id
+JOIN (
+    SELECT
+        o.customer_id,
+        SUM(o.total_amount) AS total_spent
+    FROM
+        orders o
+    WHERE
+        o.status = 'Completed'
+    GROUP BY
+        o.customer_id
+) total_customer_spend ON c.customer_id = total_customer_spend.customer_id
+WHERE
+    c.signup_date <= DATEADD(month, -1, GETDATE())
+ORDER BY
+    c.customer_id,
+    recent_orders.order_date;
+	
+	
+	
+
+
+
+CREATE VIEW INVESTOR_OVERVIEW AS
+SELECT
+    i.investor_id,
+    i.first_name,
+    i.last_name,
+    i.email,
+    p.portfolio_id,
+    p.portfolio_name,
+    recent_trades.trade_id,
+    recent_trades.trade_date,
+    recent_trades.ticker,
+    recent_trades.company_name,
+    recent_trades.trade_type,
+    recent_trades.quantity,
+    recent_trades.price_per_share,
+    recent_trades.total_trade_value,
+    CAST(dividends_received.total_dividends AS DECIMAL(10,2)) AS total_dividends,
+    CAST(average_performance.avg_performance AS DECIMAL(10,2)) AS average_performance,
+    CAST(total_investment.total_value AS DECIMAL(10,2)) AS total_investment_value
+FROM
+    investors i
+JOIN portfolios p ON i.investor_id = p.investor_id
+JOIN (
+    SELECT
+        t.trade_id,
+        t.portfolio_id,
+        s.ticker,
+        s.company_name,
+        t.trade_date,
+        t.trade_type,
+        t.quantity,
+        t.price_per_share,
+        (t.quantity * t.price_per_share) AS total_trade_value
+    FROM
+        trades t
+    JOIN stocks s ON t.stock_id = s.stock_id
+    WHERE
+        t.trade_date >= DATEADD(month, -1, GETDATE())
+) recent_trades ON p.portfolio_id = recent_trades.portfolio_id
+JOIN (
+    SELECT
+        t.portfolio_id,
+        SUM(d.dividend_amount * t.quantity) AS total_dividends
+    FROM
+        trades t
+    JOIN dividends d ON t.stock_id = d.stock_id
+    WHERE
+        d.dividend_date >= DATEADD(year, -1, GETDATE())
+    GROUP BY
+        t.portfolio_id
+) dividends_received ON p.portfolio_id = dividends_received.portfolio_id
+JOIN (
+    SELECT
+        t.portfolio_id,
+        AVG(md.closing_price) AS avg_performance
+    FROM
+        trades t
+    JOIN market_data md ON t.stock_id = md.stock_id
+    WHERE
+        md.market_date >= DATEADD(year, -1, GETDATE())
+    GROUP BY
+        t.portfolio_id
+) average_performance ON p.portfolio_id = average_performance.portfolio_id
+JOIN (
+    SELECT
+        t.portfolio_id,
+        SUM(t.quantity * md.closing_price) AS total_value
+    FROM
+        trades t
+    JOIN market_data md ON t.stock_id = md.stock_id
+    WHERE
+        md.market_date = (SELECT MAX(market_date) FROM market_data)
+    GROUP BY
+        t.portfolio_id
+) total_investment ON p.portfolio_id = total_investment.portfolio_id
+WHERE
+    i.join_date <= DATEADD(year, -1, GETDATE())
+ORDER BY
+    i.investor_id,
+    p.portfolio_id;
+	
+	
+
+CREATE VIEW CUSTOMER_SUBSCRIPTION_DETAILS AS
+SELECT
+    c.customer_id,
+    c.first_name,
+    c.last_name,
+    c.email,
+    sub.subscription_id,
+    sub.subscription_date,
+    sub.plan_name,
+    sub.plan_cost,
+    sub.plan_duration,
+    CAST(total_spend.total_spent AS DECIMAL(10,2)) AS total_spent,
+    recent_payments.payment_date,
+    recent_payments.payment_amount,
+    sub_plan.plan_features,
+    CAST(avg_review_rating.avg_rating AS DECIMAL(3,2)) AS avg_review_rating
+FROM
+    customers c
+JOIN subscriptions sub ON c.customer_id = sub.customer_id
+JOIN (
+    SELECT
+        p.subscription_id,
+        SUM(p.payment_amount) AS total_spent
+    FROM
+        payments p
+    GROUP BY
+        p.subscription_id
+) total_spend ON sub.subscription_id = total_spend.subscription_id
+JOIN (
+    SELECT
+        p.subscription_id,
+        p.payment_date,
+        p.payment_amount
+    FROM
+        payments p
+    WHERE
+        p.payment_date >= DATEADD(month, -1, GETDATE())
+) recent_payments ON sub.subscription_id = recent_payments.subscription_id
+JOIN subscription_plans sub_plan ON sub.plan_id = sub_plan.plan_id
+JOIN (
+    SELECT
+        r.subscription_id,
+        AVG(r.rating) AS avg_rating
+    FROM
+        subscription_reviews r
+    GROUP BY
+        r.subscription_id
+) avg_review_rating ON sub.subscription_id = avg_review_rating.subscription_id
+WHERE
+    c.signup_date <= DATEADD(month, -1, GETDATE())
+ORDER BY
+    c.customer_id,
+    sub.subscription_date;
+
+
+CREATE VIEW VENDOR_PERFORMANCE_ANALYSIS AS
+SELECT
+    v.vendor_id,
+    v.vendor_name,
+    v.contact_email,
+    recent_deliveries.delivery_id,
+    recent_deliveries.delivery_date,
+    recent_deliveries.total_amount,
+    product_summary.product_name,
+    product_summary.category_name,
+    product_summary.unit_price,
+    product_summary.quantity_delivered,
+    CAST(avg_product_rating.avg_rating AS DECIMAL(3,2)) AS avg_product_rating,
+    CAST(total_spent.total_spent AS DECIMAL(10,2)) AS total_spent
+FROM
+    vendors v
+JOIN (
+    SELECT
+        d.vendor_id,
+        d.delivery_id,
+        d.delivery_date,
+        d.total_amount
+    FROM
+        deliveries d
+    WHERE
+        d.delivery_date >= DATEADD(month, -1, GETDATE())
+) recent_deliveries ON v.vendor_id = recent_deliveries.vendor_id
+JOIN (
+    SELECT
+        d.delivery_id,
+        p.product_name,
+        c.category_name,
+        di.unit_price,
+        di.quantity_delivered
+    FROM
+        delivery_items di
+    JOIN products p ON di.product_id = p.product_id
+    JOIN categories c ON p.category_id = c.category_id
+) product_summary ON recent_deliveries.delivery_id = product_summary.delivery_id
+JOIN (
+    SELECT
+        r.product_id,
+        AVG(r.rating) AS avg_rating
+    FROM
+        product_reviews r
+    GROUP BY
+        r.product_id
+) avg_product_rating ON product_summary.product_id = avg_product_rating.product_id
+JOIN (
+    SELECT
+        d.vendor_id,
+        SUM(d.total_amount) AS total_spent
+    FROM
+        deliveries d
+    GROUP BY
+        d.vendor_id
+) total_spent ON v.vendor_id = total_spent.vendor_id
+WHERE
+    v.contract_start_date <= DATEADD(year, -1, GETDATE())
+ORDER BY
+    v.vendor_id,
+    recent_deliveries.delivery_date;

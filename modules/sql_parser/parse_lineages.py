@@ -7,20 +7,26 @@ import json
 import re
 from .parse_nodes import *
 
-def find_table_w_spaces(tree: sqlglot.expressions):
+
+def find_table_w_spaces(tree: sqlglot.expressions) -> list:
     """
     Finds all table names which have an empty space in them and storing them without the " " for later use, as sqlglot cannot parse them otherwise.
     """
     table_names = list(tree.find_all(exp.Table))
     space_table = []
     for element in table_names:
-        if " " in element.name:
-            space_table.append((element.name.replace(" ",""),element.name))
+
+      
+        try:
+            if " " in element.name:
+                space_table.append((element.name.replace(" ",""),element.name))
+        except AttributeError:
+            pass
+
     return list(set(space_table)) # a list of tuples with table names paired (space removed original - original) Eg. (OrderDetails, Order Details)
 
 
-
-def extract_target_columns(tree: sqlglot.expressions.Select):
+def extract_target_columns(tree: sqlglot.expressions.Select) -> tuple[list, list]:
     """
     Extract all the columns from the select statement in the input query
     """
@@ -39,7 +45,7 @@ def extract_target_columns(tree: sqlglot.expressions.Select):
     return select_statement, target_columns
 
 
-def transformer_functions(node):
+def transformer_functions(node: sqlglot.expressions.Select) -> sqlglot.expressions.Select:
     """
     Replaces column objects within the functions with simple column names
     """
@@ -48,7 +54,7 @@ def transformer_functions(node):
     return node
 
 
-def extract_transformation(tree: sqlglot.expressions.Select):
+def extract_transformation(tree: sqlglot.expressions.Select) -> list:
     """
     Extract possible transformation from columns
     """
@@ -59,12 +65,12 @@ def extract_transformation(tree: sqlglot.expressions.Select):
         if list(col.find_all(exp.Alias)) == []: # if there are no functions
             transformations.append("")
         else: # else add the function
-            transformations.append(col.sql(dialect = "tsql"))
+            transformations.append(col.sql())
 
     return transformations
 
 
-def split_at_last_as(input_string: str):  
+def split_at_last_as(input_string: str)-> str:  
     """
     Splits transformation string at last " AS ", as everything after the last " AS " is the alias, not the transformation
     """
@@ -74,14 +80,14 @@ def split_at_last_as(input_string: str):
     return input_string[:split_point], input_string[split_point + 4:]
 
 
-def get_next_nodes(query:dict, component:str, destination:str):
+def get_next_nodes(query:dict, component:str, destination:str)-> tuple[str, str]:
     """
     Extracts the next node in line and the query node
     """
     # next node in case of subquery in subquery, subquery in main_query or main_query
     if "subquery" in component:
         for key, value in query.items():
-            if component in value: # if the component is in the query 
+            if component in value.sql(): # if the component is in the query 
                 if 'subquery' in key: # subquery in subquery
                     query_node=component
                     target_node = key
@@ -168,13 +174,12 @@ def extract_lineages(preprocessed_queries:list, nodes:pd.DataFrame) -> list:
     for idx, query in enumerate(reversed_preprocessed_queries): # for query in queries
         lineages = []
         filename = f"file_{idx}"
-        destination =  list(parse_query(query['main_query']).find_all(exp.Create))[0].this.this.this
+        destination =  list(query['main_query'].find_all(exp.Create))[0].this.this.this
         # insert into try except goes here
-
         for component in query.keys(): # for query component (sub/main queries) in query
             target_columns =[]
             # preprocess query and extract all useful information
-            ast = parse_query(query[component])
+            ast = query[component]
             space_table = find_table_w_spaces(ast) # list with tables with spaces (sqlglot cant parse them)
             alias_table = get_tables(ast) # parse table name + table alias
             tree = replace_aliases(query[component]) # remove table aliases

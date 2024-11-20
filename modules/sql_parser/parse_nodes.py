@@ -8,11 +8,11 @@ import json
 import re
 
 
-def parse_query(query: str):
+def parse_query(query: str) -> sqlglot.expressions:
     """
     Parses to convert query string to a sqlglot parsed tree
     """
-    ast = parse_one(query, read="tsql")
+    ast = parse_one(query)#, read="ma")
     trial1 = repr(ast)
     return ast
 
@@ -59,16 +59,18 @@ def get_tables(ast: sqlglot.expressions.Select):
     alias_table = []
     # extract information from each table
     for table in table_alias:
-        parse_tables(table, alias_table, False)
+        try:
+            parse_tables(table, alias_table, False)
+        except:
+            pass
 
     return alias_table
 
 
-def replace_aliases(query:str):
+def replace_aliases(ast: sqlglot.expressions) -> sqlglot.expressions:
     """
     Replaces the tables' aliases in a query
     """
-    ast = parse_query(query)
     ast = list(ast.find_all(exp.Select))[0]
     alias_table = get_tables(ast)
     
@@ -82,7 +84,7 @@ def replace_aliases(query:str):
 
     return transformed_tree
 
-def extract_from_statements(tree, source_tables:list):
+def extract_from_statements(tree: sqlglot.expressions.Select, source_tables:list) -> list:
     """
     Extracts the from statement from the input query (tree)
     """
@@ -91,7 +93,8 @@ def extract_from_statements(tree, source_tables:list):
     source_tables.append(from_table)
     return source_tables
 
-def extract_join_statements(tree: sqlglot.expressions, source_tables):
+
+def extract_join_statements(tree: sqlglot.expressions, source_tables: list) -> list:
     """
     Extracts the join statement from the input query (tree)
     """
@@ -104,7 +107,7 @@ def extract_join_statements(tree: sqlglot.expressions, source_tables):
     return source_tables
 
 
-def extract_where_statements(tree: sqlglot.expressions):
+def extract_where_statements(tree: sqlglot.expressions) -> str:
     """
     Extract the where statement from the input query (tree)
     """
@@ -116,7 +119,7 @@ def extract_where_statements(tree: sqlglot.expressions):
     return where_exp
 
 
-def extract_on_statements(tree: sqlglot.expressions):
+def extract_on_statements(tree: sqlglot.expressions) -> list:
     """
     Function to extract the on condition from the join statements, (on column = column)
     """
@@ -138,7 +141,7 @@ def extract_on_statements(tree: sqlglot.expressions):
         return []
 
 
-def get_statements(tree: sqlglot.expressions):
+def get_statements(tree: sqlglot.expressions) -> tuple[list, str, list]:
     """
     Extracts from expression, join expression and where expression from query
     """
@@ -158,69 +161,73 @@ def get_statements(tree: sqlglot.expressions):
 
 
 
-def clean_query(query:str):
+def clean_query(ast: sqlglot.expressions) -> sqlglot.expressions.Select:
     """
     Cleans the query and converts it in a sqlglot select statement
     """
-    if query.startswith("("): # remove open and closing paranthesis from subqueries
-        query = query.strip("()")
-    else:
-        pass
-    ast = parse_query(query) # get parsed tree
-    tree = replace_aliases(query) # get transformed tree without table aliases
+    #if query.startswith("("): # remove open and closing paranthesis from subqueries
+    #    query = query.strip("()")
+    #else:
+    #    pass
+    #ast = parse_query(query) # get parsed tree
+    tree = replace_aliases(ast) # get transformed tree without table aliases
     select_statement_big = tree.find_all(exp.Select) # parse selects before getting statements
-    return ast, select_statement_big
+    return select_statement_big
 
 
-def add_node_subquery(nodes:list, query_name:str, file_name:str, where_exp:str, on_condition:str):
+def add_node_subquery(nodes:list, query_name:str, file_name:str, where_exp:str, on_condition:str) -> list:
     """
     Add a node to the nodes list
     """
     target_node = query_name
     #nodes.append({'NAME_NODE': f"{target_node}", 'LABEL_NODE': f'{file_name}@{target_node}', 'FILTER': where_exp, 'FUNCTION': 'subquery', 'ON': on_condition})
-    nodes.append({'NAME_NODE': target_node, 'LABEL_NODE': f'{file_name}@{target_node}', 'FILTER': where_exp, 'FUNCTION': 'subquery', 'ON': on_condition})
+    nodes.append({'NAME_NODE': target_node, 'LABEL_NODE': f'{file_name}@{target_node}', 'FILTER': where_exp, 'FUNCTION': 'subquery', 'ON': on_condition, 'COLOR': '#d0d3d3'})
     return nodes
 
 
-def add_node_mainquery(nodes:list, ast: sqlglot.expressions, where_exp, on_condition):
+def add_node_mainquery(nodes:list, ast: sqlglot.expressions, where_exp, on_condition) -> list:
     """
     Add main query node to the nodes list
     """
     try: # try to find the create or insert into statements
         target_node = list(ast.find_all(exp.Create))[0].this.this.this
-        nodes.append({'NAME_NODE': f"query_{target_node}",'LABEL_NODE': f"query_{target_node}", 'FILTER': where_exp, 'FUNCTION': 'query', 'ON': on_condition})
-        nodes.append({'NAME_NODE': target_node,'LABEL_NODE': target_node, 'FILTER': None, 'FUNCTION': 'target', 'ON': None})
+        nodes.append({'NAME_NODE': f"query_{target_node}",'LABEL_NODE': f"query_{target_node}", 'FILTER': where_exp, 'FUNCTION': 'query', 'ON': on_condition, 'COLOR': '#d0d3d3'})
+        nodes.append({'NAME_NODE': target_node,'LABEL_NODE': target_node, 'FILTER': None, 'FUNCTION': 'target', 'ON': None, 'COLOR': "#42d6a4"})
     except IndexError:
         target_node = list(ast.find_all(exp.Insert))[0].this.this
-        nodes.append({'NAME_NODE': f"query_{target_node}",'LABEL_NODE': f"query_{target_node}", 'FILTER': where_exp, 'FUNCTION': 'query', 'ON': on_condition})
-        nodes.append({'NAME_NODE': target_node,'LABEL_NODE': target_node, 'FILTER': where_exp, 'FUNCTION': 'target', 'ON': on_condition})
+        nodes.append({'NAME_NODE': f"query_{target_node}",'LABEL_NODE': f"query_{target_node}", 'FILTER': where_exp, 'FUNCTION': 'query', 'ON': on_condition, 'COLOR': '#d0d3d3'})
+        nodes.append({'NAME_NODE': target_node,'LABEL_NODE': target_node, 'FILTER': where_exp, 'FUNCTION': 'target', 'ON': on_condition, 'COLOR': "#42d6a4"})
     return nodes
 
 
-def add_node_sourcetables(nodes, source_tables, file_name, on_condition):
+def add_node_sourcetables(nodes:list, source_tables:list, file_name:str, on_condition:list) -> list:
     """
     Add source tables to nodes list
     """
     for table in source_tables:
         if table not in [node['NAME_NODE'] for node in nodes]:
             if 'subquery' in table: 
-                nodes.append({'NAME_NODE': table,'LABEL_NODE': f'{file_name}@{table}', 'FILTER': None, 'FUNCTION': 'subquery', 'ON': on_condition})
+                nodes.append({'NAME_NODE': table,'LABEL_NODE': f'{file_name}@{table}', 'FILTER': None, 'FUNCTION': 'subquery', 'ON': on_condition, 'COLOR': '#d0d3d3'})
             else:
-                nodes.append({'NAME_NODE': table,'LABEL_NODE': table, 'FILTER': None, 'FUNCTION': 'DataSources', 'ON': None})
+                nodes.append({'NAME_NODE': table,'LABEL_NODE': table, 'FILTER': None, 'FUNCTION': 'DataSources', 'ON': None, 'COLOR': "#42d6a4"})
     return nodes
 
 
-def append_convert_nodes_to_df(nodes_dataframes:list, nodes:list):
+def append_convert_nodes_to_df(nodes_dataframes:list, nodes:list) -> pd.DataFrame:
     """
     Converts a node (list of dictionaries) to dataframe and appends it to list
     """
     nodes = pd.DataFrame(nodes)
-    nodes['COLOR'] = nodes['FILTER'].apply(lambda x: '#db59a5' if x is not None else '#42d6a4')
+    #nodes['COLOR'] = nodes['FILTER'].apply(lambda x: '#db59a5' if x is not None else '#42d6a4')
+    nodes['COLOR'] = nodes.apply(
+        lambda row: row['COLOR'] if pd.isnull(row['FILTER']) else '#db59a5', 
+        axis=1
+    )
     nodes_dataframes.append(pd.DataFrame(nodes))   
     return nodes_dataframes
 
 
-def create_nodes_df(nodes_dfs:list):
+def create_nodes_df(nodes_dfs:list) -> pd.DataFrame:
     """
     Merges a list of dataframes to a dataframe
     """
@@ -260,9 +267,10 @@ def extract_nodes(preprocessed_queries:list) -> pd.DataFrame:
         filename = f"file_{i}"
         nodes = []
         for name_query in query_subqueries:
+            ast = query_subqueries[name_query]
 
             # CLEAN QUERY
-            ast, select_statement_big = clean_query(query_subqueries[name_query])
+            select_statement_big = clean_query(query_subqueries[name_query])
 
             source_tables = []
             # for every select statement in query, extract the source tables, where expressions and on conditions
