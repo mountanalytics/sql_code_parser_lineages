@@ -10,7 +10,7 @@ import re
 
 def open_query(dir:str) -> list:
     """
-    Open TSQL queries from one text file
+    Open TSQL queries from one text file, every element of the returned list is a query (split at ";")
     """ 
     with open(dir, 'r') as file: 
         file = file.read().strip().split(';')
@@ -148,5 +148,5 @@ def preprocess_queries(dir:str) -> dict:
 
 
 if __name__ == '__main__':
-    preprocess_queries('data/queries-txts/chatgpt_queries2.txt')
+    preprocess_queries('data/queries-txts/queries_rabo_qrm.txt')
 

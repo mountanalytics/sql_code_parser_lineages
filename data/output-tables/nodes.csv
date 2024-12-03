@@ -1,0 +1,53 @@
+,NAME_NODE,LABEL_NODE,FILTER,FUNCTION,ON,COLOR,ID
+0,subquery_5,file_0@subquery_5,"EQ(orders.status, 'Completed')",subquery,,#db59a5,0
+1,orders,orders,,DataSources,,#42d6a4,1
+2,subquery_4,file_0@subquery_4,,subquery,,#d0d3d3,2
+3,reviews,reviews,,DataSources,,#42d6a4,3
+4,subquery_3,file_0@subquery_3,,subquery,"['order_items.product_id = products.product_id', 'products.category_id = categories.category_id']",#d0d3d3,4
+5,order_items,order_items,,DataSources,,#42d6a4,5
+6,products,products,,DataSources,,#42d6a4,6
+7,subquery_2,file_0@subquery_2,,subquery,,#d0d3d3,7
+8,payments,payments,,DataSources,,#42d6a4,8
+9,subquery_1,file_0@subquery_1,"(AND(COMPARE(orders.order_date, DATETIME_ADDITION('MONTH')), (EQ(orders.status, 'Completed'))))",subquery,,#db59a5,9
+10,query_CUSTOMER_ORDER,query_CUSTOMER_ORDER,"COMPARE(customers.signup_date, DATETIME_ADDITION('MONTH'))",query,"['customers.customer_id = recent_orders.customer_id', 'recent_orders.order_id = recent_payments.order_id', 'recent_orders.order_id = recent_order_items.order_id', 'recent_order_items.product_id = avg_product_rating.product_id', 'customers.customer_id = total_customer_spend.customer_id']",#db59a5,10
+11,CUSTOMER_ORDER,CUSTOMER_ORDER,,target,,#42d6a4,11
+12,customers,customers,,DataSources,,#42d6a4,12
+13,(subquery_1),file_0@(subquery_1),,subquery,"['customers.customer_id = recent_orders.customer_id', 'recent_orders.order_id = recent_payments.order_id', 'recent_orders.order_id = recent_order_items.order_id', 'recent_order_items.product_id = avg_product_rating.product_id', 'customers.customer_id = total_customer_spend.customer_id']",#d0d3d3,13
+14,subquery_2,file_1@subquery_2,"COMPARE(loans.end_date, CURRENT_TIMESTAMP())",subquery,['payments.loan_id = loans.loan_id'],#db59a5,14
+15,loans,loans,,DataSources,,#42d6a4,15
+16,subquery_1,file_1@subquery_1,"COMPARE(transactions.transaction_date, DATETIME_ADDITION('MONTH'))",subquery,,#db59a5,16
+17,transactions,transactions,,DataSources,,#42d6a4,17
+18,query_CUSTOMER_BANK_DETAILS,query_CUSTOMER_BANK_DETAILS,"COMPARE(customers.join_date, DATETIME_ADDITION('YEAR'))",query,"['customers.customer_id = accounts.customer_id', 'accounts.account_type_id = account_types.account_type_id', 'accounts.branch_id = branches.branch_id', 'accounts.account_id = recent_transactions.account_id', 'customers.customer_id = loans.customer_id', 'loans.loan_id = total_interest_paid.loan_id']",#db59a5,18
+19,CUSTOMER_BANK_DETAILS,CUSTOMER_BANK_DETAILS,,target,,#42d6a4,19
+20,accounts,accounts,,DataSources,,#42d6a4,20
+21,subquery_5,file_2@subquery_5,,subquery,,#d0d3d3,21
+22,market_data,market_data,,DataSources,,#42d6a4,22
+23,subquery_4,file_2@subquery_4,"EQ(market_data.market_date, (subquery_5))",subquery,['trades.stock_id = market_data.stock_id'],#db59a5,23
+24,trades,trades,,DataSources,,#42d6a4,24
+25,subquery_3,file_2@subquery_3,"COMPARE(market_data.market_date, DATETIME_ADDITION('YEAR'))",subquery,['trades.stock_id = market_data.stock_id'],#db59a5,25
+26,subquery_2,file_2@subquery_2,"COMPARE(dividends.dividend_date, DATETIME_ADDITION('YEAR'))",subquery,['trades.stock_id = dividends.stock_id'],#db59a5,26
+27,dividends,dividends,,DataSources,,#42d6a4,27
+28,subquery_1,file_2@subquery_1,"COMPARE(trades.trade_date, DATETIME_ADDITION('MONTH'))",subquery,['trades.stock_id = stocks.stock_id'],#db59a5,28
+29,stocks,stocks,,DataSources,,#42d6a4,29
+30,query_INVESTOR_OVERVIEW,query_INVESTOR_OVERVIEW,"COMPARE(investors.join_date, DATETIME_ADDITION('YEAR'))",query,"['investors.investor_id = portfolios.investor_id', 'portfolios.portfolio_id = recent_trades.portfolio_id', 'portfolios.portfolio_id = dividends_received.portfolio_id', 'portfolios.portfolio_id = average_performance.portfolio_id', 'portfolios.portfolio_id = total_investment.portfolio_id']",#db59a5,30
+31,INVESTOR_OVERVIEW,INVESTOR_OVERVIEW,,target,,#42d6a4,31
+32,investors,investors,,DataSources,,#42d6a4,32
+33,portfolios,portfolios,,DataSources,,#42d6a4,33
+34,subquery_3,file_3@subquery_3,,subquery,,#d0d3d3,34
+35,subscription_reviews,subscription_reviews,,DataSources,,#42d6a4,35
+36,subquery_2,file_3@subquery_2,"COMPARE(payments.payment_date, DATETIME_ADDITION('MONTH'))",subquery,,#db59a5,36
+37,subquery_1,file_3@subquery_1,,subquery,,#d0d3d3,37
+38,query_CUSTOMER_SUBSCRIPTION_DETAILS,query_CUSTOMER_SUBSCRIPTION_DETAILS,"COMPARE(customers.signup_date, DATETIME_ADDITION('MONTH'))",query,"['customers.customer_id = subscriptions.customer_id', 'subscriptions.subscription_id = total_spend.subscription_id', 'subscriptions.subscription_id = recent_payments.subscription_id', 'subscriptions.plan_id = subscription_plans.plan_id', 'subscriptions.subscription_id = avg_review_rating.subscription_id']",#db59a5,38
+39,CUSTOMER_SUBSCRIPTION_DETAILS,CUSTOMER_SUBSCRIPTION_DETAILS,,target,,#42d6a4,39
+40,subscriptions,subscriptions,,DataSources,,#42d6a4,40
+41,subquery_4,file_4@subquery_4,,subquery,,#d0d3d3,41
+42,deliveries,deliveries,,DataSources,,#42d6a4,42
+43,subquery_3,file_4@subquery_3,,subquery,,#d0d3d3,43
+44,product_reviews,product_reviews,,DataSources,,#42d6a4,44
+45,subquery_2,file_4@subquery_2,,subquery,"['delivery_items.product_id = products.product_id', 'products.category_id = categories.category_id']",#d0d3d3,45
+46,delivery_items,delivery_items,,DataSources,,#42d6a4,46
+47,subquery_1,file_4@subquery_1,"COMPARE(deliveries.delivery_date, DATETIME_ADDITION('MONTH'))",subquery,,#db59a5,47
+48,query_VENDOR_PERFORMANCE_ANALYSIS,query_VENDOR_PERFORMANCE_ANALYSIS,"COMPARE(vendors.contract_start_date, DATETIME_ADDITION('YEAR'))",query,"['vendors.vendor_id = recent_deliveries.vendor_id', 'recent_deliveries.delivery_id = product_summary.delivery_id', 'product_summary.product_id = avg_product_rating.product_id', 'vendors.vendor_id = total_spent.vendor_id']",#db59a5,48
+49,VENDOR_PERFORMANCE_ANALYSIS,VENDOR_PERFORMANCE_ANALYSIS,,target,,#42d6a4,49
+50,vendors,vendors,,DataSources,,#42d6a4,50
+51,(subquery_1),file_4@(subquery_1),,subquery,"['vendors.vendor_id = recent_deliveries.vendor_id', 'recent_deliveries.delivery_id = product_summary.delivery_id', 'product_summary.product_id = avg_product_rating.product_id', 'vendors.vendor_id = total_spent.vendor_id']",#d0d3d3,51

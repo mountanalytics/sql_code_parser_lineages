@@ -14,9 +14,7 @@ def find_table_w_spaces(tree: sqlglot.expressions) -> list:
     """
     table_names = list(tree.find_all(exp.Table))
     space_table = []
-    for element in table_names:
-
-      
+    for element in table_names:      
         try:
             if " " in element.name:
                 space_table.append((element.name.replace(" ",""),element.name))
