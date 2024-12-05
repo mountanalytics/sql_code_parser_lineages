@@ -1,10 +1,9 @@
-DECLARE @PortfolioCurrent varchar(255)	=	?
-DECLARE @Market date			=	?
-DECLARE @CompanyName varchar(255)	=	?
-DECLARE @RunId int
+DECLARE @PortfolioCurrent varchar(255)	=	?;
+DECLARE @Market date			=	?;
+DECLARE @CompanyName varchar(255)	=	?;
+DECLARE @RunId int;
 DECLARE @RunId1 int;
 
--- Get RunId from QRM.Run_Time_Description main table(Portfolio Run check)
 SELECT	@RunId = RUNID 
 FROM	QRM.Run_Time_Description
 WHERE	Portfolio = @PortfolioCurrent

@@ -1,0 +1,5 @@
+{
+    "modified_SQL_query": "UPDATE staging.FTP_Unpivot SET EQ(staging.FTP_Unpivot.Funding_space_Component, cfg.ALM_LKP_Receiving_legal_entity.Funding_Component), EQ(staging.FTP_Unpivot.Receiving_Legal_Entity, cfg.ALM_LKP_Receiving_legal_entity.Receiving_Legal_Entity) FROM staging.FTP_Unpivot AS a INNER JOIN cfg.ALM_LKP_Receiving_legal_entity AS d ON EQ(staging.FTP_Unpivot.Funding_space_Component, cfg.ALM_LKP_Receiving_legal_entity.Funding_Component_Export)",
+    "subquery_dictionary": {},
+    "type": "update_or_create_set"
+}

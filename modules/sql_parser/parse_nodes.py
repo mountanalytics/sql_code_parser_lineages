@@ -8,14 +8,6 @@ import json
 import re
 
 
-def parse_query(query: str) -> sqlglot.expressions:
-    """
-    Parses to convert query string to a sqlglot parsed tree
-    """
-    ast = parse_one(query)#, read="ma")
-    trial1 = repr(ast)
-    return ast
-
 
 def parse_tables(table, table_alias_list, subquery=True):    
     """
@@ -165,11 +157,6 @@ def clean_query(ast: sqlglot.expressions) -> sqlglot.expressions.Select:
     """
     Cleans the query and converts it in a sqlglot select statement
     """
-    #if query.startswith("("): # remove open and closing paranthesis from subqueries
-    #    query = query.strip("()")
-    #else:
-    #    pass
-    #ast = parse_query(query) # get parsed tree
     tree = replace_aliases(ast) # get transformed tree without table aliases
     select_statement_big = tree.find_all(exp.Select) # parse selects before getting statements
     return select_statement_big
@@ -180,7 +167,6 @@ def add_node_subquery(nodes:list, query_name:str, file_name:str, where_exp:str, 
     Add a node to the nodes list
     """
     target_node = query_name
-    #nodes.append({'NAME_NODE': f"{target_node}", 'LABEL_NODE': f'{file_name}@{target_node}', 'FILTER': where_exp, 'FUNCTION': 'subquery', 'ON': on_condition})
     nodes.append({'NAME_NODE': target_node, 'LABEL_NODE': f'{file_name}@{target_node}', 'FILTER': where_exp, 'FUNCTION': 'subquery', 'ON': on_condition, 'COLOR': '#d0d3d3'})
     return nodes
 
@@ -197,7 +183,7 @@ def add_node_mainquery(nodes:list, ast: sqlglot.expressions, where_exp, on_condi
         target_node = list(ast.find_all(exp.Insert))[0].this.this
         nodes.append({'NAME_NODE': f"query_{target_node}",'LABEL_NODE': f"query_{target_node}", 'FILTER': where_exp, 'FUNCTION': 'query', 'ON': on_condition, 'COLOR': '#d0d3d3'})
         nodes.append({'NAME_NODE': target_node,'LABEL_NODE': target_node, 'FILTER': where_exp, 'FUNCTION': 'target', 'ON': on_condition, 'COLOR': "#42d6a4"})
-    return nodes
+    return nodes, target_node
 
 
 def add_node_sourcetables(nodes:list, source_tables:list, file_name:str, on_condition:list) -> list:
@@ -218,11 +204,11 @@ def append_convert_nodes_to_df(nodes_dataframes:list, nodes:list) -> pd.DataFram
     Converts a node (list of dictionaries) to dataframe and appends it to list
     """
     nodes = pd.DataFrame(nodes)
-    #nodes['COLOR'] = nodes['FILTER'].apply(lambda x: '#db59a5' if x is not None else '#42d6a4')
     nodes['COLOR'] = nodes.apply(
-        lambda row: row['COLOR'] if pd.isnull(row['FILTER']) else '#db59a5', 
+        lambda row: row['COLOR'] if pd.isnull(row['FILTER']) and pd.isnull(row['ON']) else '#db59a5', 
         axis=1
     )
+
     nodes_dataframes.append(pd.DataFrame(nodes))   
     return nodes_dataframes
 
@@ -240,17 +226,91 @@ def create_nodes_df(nodes_dfs:list) -> pd.DataFrame:
     return nodes
 
 
-def reverse_subqueries(preprocessed_queries:list) -> list:
+
+
+
+def reverse_subquery(query:dict) -> dict:
     """
     Reverse the order of the subqueries to access them from the deepest level
     """
-    reversed_preprocessed_queries = []
-    for query in preprocessed_queries:
-        query_subqueries = dict(reversed(list(query['subquery_dictionary'].items())))
-        query_subqueries['main_query'] = query['modified_SQL_query']
-        reversed_preprocessed_queries.append(query_subqueries)
-        
-    return reversed_preprocessed_queries
+    reversed_query= dict(reversed(list(query['subquery_dictionary'].items())))
+    reversed_query['main_query'] = query['modified_SQL_query']
+    
+    return reversed_query
+
+
+
+def parse_update_or_create_select_nodes(query, i):
+    
+    query_subqueries = reverse_subquery(query)
+
+    filename = f"file_{i}"
+    nodes = []
+
+    for name_query in query_subqueries:
+        ast = query_subqueries[name_query]
+
+        select_statement_big = clean_query(query_subqueries[name_query])
+
+        source_tables = []
+        # for every select statement in query, extract the source tables, where expressions and on conditions
+        for select in list(select_statement_big):
+            source_table, where_exp, on_condition = get_statements(select) 
+            source_tables += source_table            
+
+        if 'subquery' in name_query: # if the query is a subquery then the name is the dict key, else the name is the target table
+            nodes = add_node_subquery(nodes, name_query, filename, where_exp, on_condition)
+        else:
+            nodes, destination = add_node_mainquery(nodes, ast, where_exp, on_condition)
+        nodes = add_node_sourcetables(nodes, source_tables, filename, on_condition)
+
+    return nodes
+
+
+def parse_update_or_create_set_nodes(query, query_node):
+    nodes = []
+    tables = []
+
+    ast = query['modified_SQL_query']
+    update = list(ast.find_all(exp.Update))[0]
+
+    # join statements
+    join  = list(ast.find_all(exp.Join))#[0]
+
+    if join != []:
+        for j in join:
+            table = list(j.find_all(exp.Table))
+            for t in table:
+                tables.append({"table": t})
+                nodes.append({'NAME_NODE': f"{str(t.db)}.{str(t.this)}",'LABEL_NODE': f"{str(t.db)}.{str(t.this)}", 'FILTER': None, 'FUNCTION': 'DataSources', 'ON': None, 'COLOR': "#42d6a4"})
+
+    where_exp  = list(ast.find_all(exp.Where))
+    if where_exp != []:
+        where_exp = where_exp[0].sql('tsql')
+    else:
+        where_exp = None
+    
+    on_condition = "\n".join([i.sql('tsql') for i in list(ast.find_all(exp.Join))])
+
+    target_db = str(list(ast.find_all(exp.Update))[0].this.db)
+    target_node = str(list(ast.find_all(exp.Update))[0].this.this)
+    destination=target_node
+
+    #query_node = f"query_{target_node}"
+
+    # source
+    nodes.append({'NAME_NODE':f"{target_db}.{target_node}",'LABEL_NODE': f"{target_db}.{target_node}", 'FILTER': None, 'FUNCTION': 'DataSources', 'ON': None, 'COLOR': "#42d6a4"})
+    # query
+    nodes.append({'NAME_NODE': query_node,'LABEL_NODE': query_node, 'FILTER': where_exp, 'FUNCTION': 'query', 'ON': str(on_condition), 'COLOR': '#d0d3d3'})
+    # target
+    #nodes.append({'NAME_NODE': f"{target_db}.{target_node}",'LABEL_NODE': f"{target_db}.{target_node}", 'FILTER': None, 'FUNCTION': 'target', 'ON': on_condition, 'COLOR': "#42d6a4"})
+    return nodes
+
+
+def parse_declare_nodes(query):
+    nodes = []
+    variable = [i.replace('@', '') for i in re.findall(r"@\w+", query['modified_SQL_query'])][0]
+    nodes.append({'NAME_NODE': variable,'LABEL_NODE': variable, 'FILTER': None, 'FUNCTION': 'variable', 'ON': None, 'COLOR': "#42d6a4"})
 
 
 
@@ -259,32 +319,41 @@ def extract_nodes(preprocessed_queries:list) -> pd.DataFrame:
     Orchestrates the extraction of the nodes from a list of queries, the output being a nodes pd.DataFrame
     """
 
-    reversed_preprocessed_queries = reverse_subqueries(preprocessed_queries)
     # create nodes
     nodes_dfs = []
     queries= []
-    for i, query_subqueries in enumerate(reversed_preprocessed_queries):
-        filename = f"file_{i}"
-        nodes = []
-        for name_query in query_subqueries:
-            ast = query_subqueries[name_query]
 
-            # CLEAN QUERY
-            select_statement_big = clean_query(query_subqueries[name_query])
+    for i, query in enumerate(preprocessed_queries):
 
-            source_tables = []
-            # for every select statement in query, extract the source tables, where expressions and on conditions
-            for select in list(select_statement_big):
-                source_table, where_exp, on_condition = get_statements(select) 
-                source_tables += source_table            
+        query_node = f"query_{i+1}"
 
-            if 'subquery' in name_query: # if the query is a subquery then the name is the dict key, else the name is the target table
-                nodes = add_node_subquery(nodes, name_query, filename, where_exp, on_condition)
-            else:
-                nodes = add_node_mainquery(nodes, ast, where_exp, on_condition)
-            nodes = add_node_sourcetables(nodes, source_tables, filename, on_condition)
-        nodes_dfs = append_convert_nodes_to_df(nodes_dfs, nodes)
+        if query['type'] == 'update_or_create_select': # or  query['type'] == 'select' ### to add select without create or update
+            nodes = parse_update_or_create_select_nodes(query, i)
+
+
+        elif query['type'] == 'update_or_create_set':
+            nodes = parse_update_or_create_set_nodes(query, query_node)
+
+
+        elif query['type'] == 'declare':
+            nodes = parse_declare_nodes(query)
+
+        else:
+            nodes = None
+
+
+        if nodes != None:
+            nodes_dfs = append_convert_nodes_to_df(nodes_dfs, nodes)
 
     nodes = create_nodes_df(nodes_dfs)
-
+    
     return nodes
+
+
+
+#if __name__ == '__main__': #python -m modules.sql_parser.parse_nodes
+#    from modules.sql_parser.extraction_sqlglot import preprocess_queries
+#
+#    preprocessed_queries = preprocess_queries('data/queries-txts/queries_rabo_qrm.txt') # 'data/queries-txts/WorldWideImporters 1.txt'
+#
+#    nodes = extract_nodes(preprocessed_queries)

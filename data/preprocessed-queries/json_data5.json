@@ -1,0 +1,5 @@
+{
+    "modified_SQL_query": "SELECT EQ(@RunId, QRM.Run_Time_Description.RUNID) FROM QRM.Run_Time_Description WHERE AND(AND(AND(AND(EQ(QRM.Run_Time_Description.Portfolio, @PortfolioCurrent), EQ(TYPE_CONVERSION(QRM.Run_Time_Description.date), TYPE_CONVERSION(QRM.Run_Time_Description.date))), EQ(QRM.Run_Time_Description.CompanyName, @CompanyName)), COMPARE(QRM.Run_Time_Description.RunParameter, ('Val_shock', 'Val_shock_old', 'CSRBB'))), EQ(ISDATE(QRM.Run_Time_Description.Market), 1))",
+    "subquery_dictionary": {},
+    "type": "select"
+}

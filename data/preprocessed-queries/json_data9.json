@@ -1,0 +1,5 @@
+{
+    "modified_SQL_query": "WHILE 1=1 BEGIN DELETE TOP (100000) FROM [dbo].[REP_Master_Value] WHERE Entity = CASE WHEN 'GRP' ='BWF' THEN 'BPD' ELSE 'GRP' END AND Source='QRM' AND Market_as_of_date = '2/29/2024' IF @@ROWCOUNT = 0 BREAK END GO",
+    "subquery_dictionary": "",
+    "type": "other"
+}

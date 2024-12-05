@@ -1,4 +1,5 @@
 {
-    "modified_SQL_query": "DECLARE @PortfolioCurrent varchar(255) = ? DECLARE @Market date = ? DECLARE @CompanyName varchar(255) = ? DECLARE @RunId int DECLARE @RunId1 int -- Get RunId from QRM.Run_Time_Description main table(Portfolio Run check) SELECT @RunId = RUNID FROM QRM.Run_Time_Description WHERE Portfolio = @PortfolioCurrent AND CONVERT(date, Market) = CONVERT(date, @Market) AND CompanyName = @CompanyName AND RunParameter in ('Val_shock','Val_shock_old','CSRBB') AND ISDATE(Market) = 1 Update [staging].[FTP_Unpivot] set [Funding Component] = d.Funding_Component, [Receiving_Legal_Entity] = d.[Receiving_Legal_Entity] From [staging].[FTP_Unpivot] a INNER JOIN [cfg].[ALM_LKP_Receiving_legal_entity] d ON a.[Funding Component]=d.[Funding_Component_Export] UPDATE [staging].[FTP_Unpivot] SET [Dirty Price] = 0 WHERE ( Level_4 = 'Fixed Rate Mortgages' AND instrument_set IN ( 'mortgage' ,'offset mortgage' ) AND external_counterparty_segment = 'households' AND ( market_shock LIKE '%SOT%' OR market_shock LIKE '%EVEatR%' ) ) OR ( Level_4 = 'Fixed Rate Mortgage Savings' AND instrument_set = 'mortgage savings' AND ( market_shock LIKE 'SOT%' OR market_shock LIKE 'EVEatR%' ) ) AND ( Portfolio LIKE '%OBV' OR Portfolio LIKE '%ABB' ) SELECT COUNT(*) FROM [dbo].[REP_Master_Value] WHERE Entity = CASE WHEN 'GRP' ='BWF' THEN 'BPD' ELSE 'GRP' END AND Source='QRM' AND Market_as_of_date = '2/29/2024'",
-    "subquery_dictionary": {}
+    "modified_SQL_query": "DECLARE @PortfolioCurrent varchar(255) = ?",
+    "subquery_dictionary": "",
+    "type": "declare"
 }
