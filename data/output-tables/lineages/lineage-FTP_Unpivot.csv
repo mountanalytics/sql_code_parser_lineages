@@ -1,5 +1,0 @@
-,SOURCE,TARGET,TRANSFORMATION,FILE_NAME,ROW_ID,LINK_VALUE,SOURCE_NODE,TARGET_NODE,SOURCE_FIELD,TARGET_FIELD,COLOR
-0,cfg.ALM_LKP_Receiving_legal_entity.Funding_Component,query_7.Funding_Component,,file_6,0,1,0,2,Funding_Component,Funding_Component,aliceblue
-1,query_7.Funding_Component,staging.FTP_Unpivot.Funding_space_Component,,file_6,0,1,2,1,Funding_Component,Funding_space_Component,aliceblue
-2,cfg.ALM_LKP_Receiving_legal_entity.Receiving_Legal_Entity,query_7.Receiving_Legal_Entity,,file_6,0,1,0,2,Receiving_Legal_Entity,Receiving_Legal_Entity,aliceblue
-3,query_7.Receiving_Legal_Entity,staging.FTP_Unpivot.Receiving_Legal_Entity,,file_6,0,1,2,1,Receiving_Legal_Entity,Receiving_Legal_Entity,aliceblue

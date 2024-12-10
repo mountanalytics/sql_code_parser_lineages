@@ -427,6 +427,8 @@ def extract_nodes(preprocessed_queries:list) -> pd.DataFrame:
             nodes_dfs = append_convert_nodes_to_df(nodes_dfs, nodes)
 
         elif query['type'] == 'while_delete':
+            nodes = []
+
             where_exp = list(ast.find_all(exp.Where))
             tables = list(ast.find_all(exp.Table))
 
@@ -436,6 +438,8 @@ def extract_nodes(preprocessed_queries:list) -> pd.DataFrame:
             nodes_dfs = append_convert_nodes_to_df(nodes_dfs, nodes)
 
         elif query['type'] == 'declare':
+            nodes = []
+
             variable = re.findall(r'@\w+', query['modified_SQL_query'])[0]
             nodes.append({'NAME_NODE': variable,'LABEL_NODE': variable, 'FILTER': None, 'FUNCTION': 'variable', 'ON': None, 'COLOR': '#d0d3d3'})
             nodes_dfs = append_convert_nodes_to_df(nodes_dfs, nodes)
@@ -444,12 +448,15 @@ def extract_nodes(preprocessed_queries:list) -> pd.DataFrame:
 
         
         elif query['type'] == 'if_not_exists':
+            nodes = []
+
             variable = re.findall(r'@\w+', query['modified_SQL_query'])[-1]
 
             nodes.append({'NAME_NODE': variable,'LABEL_NODE': variable, 'FILTER': query['modified_SQL_query'], 'FUNCTION': 'query', 'ON': None, 'COLOR': '#d0d3d3'})
             nodes_dfs = append_convert_nodes_to_df(nodes_dfs, nodes)
         
         elif query['type'] == 'truncate':
+            nodes = []
             table = query['modified_SQL_query'].split()[-1]
             #print(table)
             nodes.append({'NAME_NODE': table,'LABEL_NODE': table, 'FILTER': None, 'FUNCTION': 'DataSources', 'ON': str(on_condition), 'COLOR': '#d0d3d3'})

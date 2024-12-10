@@ -1,5 +1,12 @@
 ,NAME_NODE,LABEL_NODE,FILTER,FUNCTION,ON,COLOR,ID
-0,cfg.ALM_LKP_Receiving_legal_entity,cfg.ALM_LKP_Receiving_legal_entity,,DataSources,,#42d6a4,0
-1,staging.FTP_Unpivot,staging.FTP_Unpivot,,DataSources,,#42d6a4,1
-2,query_7,query_7,,query,INNER JOIN cfg.ALM_LKP_Receiving_legal_entity AS d ON staging.FTP_Unpivot.Funding_space_Component = cfg.ALM_LKP_Receiving_legal_entity.Funding_Component_Export,#db59a5,2
-3,query_8,query_8,"WHERE (staging.FTP_Unpivot.Level_4 = 'Fixed Rate Mortgages' AND staging.FTP_Unpivot.instrument_set IN ('mortgage', 'offset mortgage') AND staging.FTP_Unpivot.external_counterparty_segment = 'households' AND (staging.FTP_Unpivot.market_shock LIKE '%SOT%' OR staging.FTP_Unpivot.market_shock LIKE '%EVEatR%')) OR (staging.FTP_Unpivot.Level_4 = 'Fixed Rate Mortgage Savings' AND staging.FTP_Unpivot.instrument_set = 'mortgage savings' AND (staging.FTP_Unpivot.market_shock LIKE 'SOT%' OR staging.FTP_Unpivot.market_shock LIKE 'EVEatR%')) AND (staging.FTP_Unpivot.Portfolio LIKE '%OBV' OR staging.FTP_Unpivot.Portfolio LIKE '%ABB')",query,,#db59a5,3
+0,@PortfolioCurrent,@PortfolioCurrent,,variable,,#d0d3d3,0
+1,@Market,@Market,,variable,,#d0d3d3,1
+2,@CompanyName,@CompanyName,,variable,,#d0d3d3,2
+3,@RunId,@RunId,,variable,,#d0d3d3,3
+4,@RunId1,@RunId1,,variable,,#d0d3d3,4
+5,cfg.ALM_LKP_Receiving_legal_entity,cfg.ALM_LKP_Receiving_legal_entity,,DataSources,,#42d6a4,5
+6,.staging.FTP_Unpivot,.staging.FTP_Unpivot,,DataSources,,#42d6a4,6
+7,staging.FTP_Unpivot,staging.FTP_Unpivot,,DataSources,,#42d6a4,7
+8,query_7,query_7,,query,['INNER JOIN cfg.ALM_LKP_Receiving_legal_entity AS d ON staging.FTP_Unpivot.Funding_space_Component = d.Funding_Component_Export'],#db59a5,8
+9,query_8,query_8,"[""WHERE (Level_4 equals 'Fixed Rate Mortgages'"", ""and instrument_set is one of 'mortgage', 'offset mortgage'"", ""and external_counterparty_segment equals 'households'"", ""and (market_shock contains 'SOT'"", ""or market_shock contains 'EVEatR'))"", ""or (Level_4 equals 'Fixed Rate Mortgage Savings'"", ""and instrument_set equals 'mortgage savings'"", ""and (market_shock starts with 'SOT'"", ""or market_shock starts with 'EVEatR'))"", ""and (Portfolio ends with 'OBV'"", ""or Portfolio ends with 'ABB')""]",query,[],#db59a5,9
+10,query_10,query_10,"DELETE WHERE (Level_4 equals 'Fixed Rate Mortgages' and instrument_set is one of 'mortgage', 'offset mortgage' and external_counterparty_segment equals 'households' and (market_shock contains 'SOT' or market_shock contains 'EVEatR')) or (Level_4 equals 'Fixed Rate Mortgage Savings' and instrument_set equals 'mortgage savings' and (market_shock starts with 'SOT' or market_shock starts with 'EVEatR')) and (Portfolio ends with 'OBV' or Portfolio ends with 'ABB')",query,[],#db59a5,10

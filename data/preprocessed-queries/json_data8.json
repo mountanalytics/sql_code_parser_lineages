@@ -1,5 +1,5 @@
 {
-    "modified_SQL_query": "SELECT COUNT(*) FROM dbo.REP_Master_Value WHERE AND(AND(EQ(dbo.REP_Master_Value.Entity, IFTHENELSE(EQ('GRP', 'BWF'),'BPD', 'GRP')), EQ(dbo.REP_Master_Value.Source, 'QRM')), EQ(dbo.REP_Master_Value.Market_as_of_date, '2/29/2024'))",
+    "modified_SQL_query": "SELECT COUNT(*) FROM dbo.REP_Master_Value WHERE AND(AND(EQ(Entity, IFTHENELSE(EQ('GRP', 'BWF'),'BPD', 'GRP')), EQ(Source, 'QRM')), EQ(Market_as_of_date, '2/29/2024'))",
     "subquery_dictionary": {},
     "type": "select"
 }

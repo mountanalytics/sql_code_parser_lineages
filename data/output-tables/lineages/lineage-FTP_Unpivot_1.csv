@@ -1,2 +1,0 @@
-,SOURCE,TARGET,TRANSFORMATION,FILE_NAME,ROW_ID,LINK_VALUE,SOURCE_NODE,TARGET_NODE,SOURCE_FIELD,TARGET_FIELD,COLOR
-0,query_8.value: 0,staging.FTP_Unpivot.Dirty_space_Price,,file_7,0,1,3,1,value: 0,Dirty_space_Price,aliceblue
