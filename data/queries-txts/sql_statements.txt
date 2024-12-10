@@ -1,0 +1,257 @@
+Update [staging].[FTP_Unpivot]
+set [Dirty Price] = 0
+where
+(
+	Level_4 = 'Fixed Rate Mortgages'
+	and Forward_Starting = 'FS'
+	and [Funding Component] in ('Basefundinginterest', 'Principal', 'Total Value')
+	and market_shock not in ('Book Value', 'Face Amount', 'Net WAC', 'WAL_0')
+)
+or
+(
+	instrument_set = 'Mortgage Proposal'
+	and [Funding Component] in ('Basefundinginterest', 'Principal', 'Total Value')
+	and market_shock not in ('Book Value', 'Face Amount', 'Net WAC', 'WAL_0')
+)
+And
+(
+	Portfolio like '%OBV' or Portfolio like '%ABB'
+);
+
+
+UPDATE [staging].[FTP_Unpivot]
+SET [Dirty Price] = 0
+WHERE
+(
+		Level_4 = 'Fixed Rate Mortgages'
+		AND instrumnet_set IN (
+			'mortgage'
+			,'offset mortgage'
+			)
+		AND external_counterparty_segment = 'households'
+		AND (
+			market_shock LIKE '%SOT'
+			OR market_shock LIKE '%EVEatR'
+			)
+		)
+
+	OR (
+		Level_4 = 'Fixed Rate Mortgage Savings'
+		AND instrument_set = 'mortgage savings'
+		AND (
+			market_shock LIKE '%SOT'
+			OR market_shock LIKE '%EVEatR'
+			)
+		)
+	AND (
+		Portfolio LIKE '%OBV'
+		OR Portfolio LIKE '%ABB'
+		);
+
+
+SELECT COUNT(*)
+FROM [dbo].[REP_Discount_Factors]
+WHERE [Market] = '12/31/2021';
+WHILE 1=1
+	BEGIN
+		DELETE TOP(100000)
+		FROM [dbo].[REP_Discount_Factors]
+		WHERE [Market] = '12/31/2021' IF @@ROWCOUNT = 0 BREAK
+	END
+GO;
+
+
+SELECT COUNT(*)
+FROM [dbo].[REP_Master_GAP]
+WHERE Entity = CASE WHEN 'TRG' ='BWF' THEN 'BPD' ELSE 'TRG' END AND Source ='QRM'  AND Market_as_of_date = '3/31/2016';
+WHILE 1=1
+	BEGIN
+		DELETE TOP(100000)
+		FROM [dbo].[REP_Master_GAP]
+		WHERE Entity = CASE WHEN 'TRG' ='BWF' THEN 'BPD' ELSE 'TRG' END AND Source ='QRM'  AND Market_as_of_date = '3/31/2016' IF @@ROWCOUNT = 0 BREAK
+	END
+GO;
+
+
+DECLARE @PortfolioCurrent varchar(255)	=	?;
+DECLARE @Market date			=	?;
+DECLARE @LikeMatchGap varchar(255)	=	?;
+DECLARE @CompanyName varchar(255)	=	?;
+
+SELECT convert(INT,forecastid) as forcastid FROM QRM.Run_Time_Description WHERE
+ 1=1
+ AND Portfolio = @PortfolioCurrent
+ AND Convert(Date,Market) = Convert(Date,@Market)
+ AND Strategy like @LikeMatchGap
+ AND CompanyName = @CompanyName
+ AND DateTimeStamp = (select max(DateTimeStamp) FROM [QRM].[Run_Time_Description] where CompanyName = @CompanyName AND Portfolio = @PortfolioCurrent);
+
+DECLARE @PortfolioCurrent varchar(255)	=	'5/31/2024';
+DECLARE @Entity varchar(10)	=	'OBV';
+DECLARE @DataSetEmpty bit = 0;
+
+IF NOT EXISTS (
+	SELECT 1
+	FROM exp.MDSStoBETValuationResult
+	WHERE Entity = @Entity
+	and CONVERT(date, PortfolioAsOfDate) = CONVERT(date, @PortfolioCurrent)
+)
+SET @DataSetEmpty = 1;
+
+
+
+
+Select		FBA_CNT+
+		FSH_CNT+
+		FUP_CNT As RecordCount from
+
+
+(Select count(*) as FBA_CNT from [staging].[FTP_Base])FBA join
+(Select count(*) as FSH_CNT from [staging].[FTP_Shocks])FSH on 1=1 join
+(Select count(*) as FUP_CNT from [staging].[FTP_Unpivot])FUP on 1=1;
+
+
+truncate table [staging].[FTP_Base];
+truncate table [staging].[FTP_Shocks];
+truncate table [staging].[FTP_Unpivot];
+
+
+DROP TABLE IF EXISTS [dbo].[FTP_Base_Assumption_Staging];
+
+
+
+DECLARE @Product AS CHAR(3)	= ?;
+DECLARE @Period AS VARCHAR(6)	= ?;
+DECLARE @FileID AS SMALLINT	= ?;
+
+SELECT
+			PF.Import_Table
+,			PF.Input_Location
+,			PF.Import_error_table
+,			PF.Mastertable_Tabel_Field
+,			PF.Imported_Location
+,			PF.Mail_Group
+,			FS.[File_Name]
+,			PP1.Parameter_Value
+,			PP2.Parameter_Value AS Reporting_Database
+,			PP3.Parameter_Value AS Reporting_Server
+FROM		dbo.tbl_Product PR
+INNER JOIN	dbo.tbl_Product_file PF
+ON			PR.Product_id = PF.Product_id
+AND			PR.Period = PF.Period
+LEFT JOIN	dbo.tbl_File_State FS
+ON			PF.Product_id = FS.Product_id
+AND			PF.Period = FS.Period
+AND			PF.[File_id] = FS.[File_id]
+INNER JOIN	dbo.tbl_Product_parameter PP1
+ON			PF.Product_id = PP1.Product_id		
+AND			PF.Period = PP1.Period
+INNER JOIN	dbo.tbl_Product_parameter PP2
+ON			PP2.Product_id = 'GEN' AND PF.Period = PP2.Period
+INNER JOIN	dbo.tbl_Product_parameter PP3
+ON			PP3.Product_id = 'GEN' AND PF.Period = PP3.Period
+AND			PF.Period = PP1.Period
+WHERE		PP1.Action_Take = 'Portdate'
+AND			PP2.Action_Take = 'ReportingDatabase'
+AND			PP3.Action_Take = 'ReportingServer'
+AND			PR.Product_id = @Product
+AND			PR.Period = @Period
+AND			PF.[File_id] = @FileID;
+
+
+
+
+Select PLN.PLN_CNT+RTD.RTD_CNT+ACD.ACD_CNT+FOP.FOP_CNT+GAP.GAP_CNT from
+(Select count(*) as PLN_CNT from [staging].[PlanningDimentsions])PLN join
+(Select count(*) as RTD_CNT from [staging].[Run_Time_Description])RTD on 1=1 join
+(Select count(*) as ACD_CNT from [staging].[Account_Dimension])ACD on 1=1 join
+(Select count(*) as FOP_CNT from [staging].[Forecast_Periods])FOP on 1=1 join
+(Select count(*) as GAP_CNT from [staging].[GAP])GAP on 1=1 ;
+
+truncate table [staging].[PlanningDimentsions];
+truncate table [staging].[Run_Time_Description];
+truncate table [staging].[Account_Dimension];
+truncate table [staging].[Forecast_Periods];
+truncate table [staging].[GAP];
+
+
+
+
+
+Update gap
+set
+ gap.[Intercompany_segment] = ISNULL(cp.[Intercompany_segment], 'LKP_error')
+FROM [staging].[GAP] gap
+Left Join [cfg].[LKP_Counterparty] cp
+on
+ cp.[Intercompany_Legal_Entity] = gap.Intercompany_Legal_Entity
+ and cp.[Intercompany_Counterparty] = gap.[Intercompany_Counterparty];
+
+
+
+
+Update staging.GAP_DCF_Intermediate
+set [ValueResult]=0, [ValueCorrected]=0
+where
+((
+	Level_04 = 'Fixed Rate Mortgages'
+	and Forward_Starting = 'FS'
+	and [Funding_Component_Mapping_ID] in ('Base funding interest', 'Principal', 'Total Value')
+)
+or
+(
+	instrument_set = 'Mortgage Proposal'
+	and [Funding_Component_Mapping_ID] in ('Base funding interest', 'Principal', 'Total Value')
+))
+And
+(
+	Entity in ('OBV','ABB')
+);
+
+
+DECLARE @Product AS CHAR(3)	= ?;
+DECLARE @Period AS VARCHAR(6)	= ?;
+DECLARE @FileID AS INT		= ?;
+
+SELECT
+			PF.Import_Table
+,			PF.Input_Location
+,			PF.Import_error_table
+,			PF.Mastertable_Tabel_Field
+,			PF.Imported_Location
+,			ISNULL(PF.Mail_Group, '') Mail_Group
+,			FS.[File_Name]
+,			PP1.Parameter_Value
+,			PP2.Parameter_Value AS Reporting_Database
+,			PP3.Parameter_Value AS Reporting_Server
+FROM		dbo.tbl_Product PR
+INNER JOIN	dbo.tbl_Product_file PF
+ON			PR.Product_id = PF.Product_id
+AND			PR.Period = PF.Period
+LEFT JOIN	dbo.tbl_File_State FS
+ON			PF.Product_id = FS.Product_id
+AND			PF.Period = FS.Period
+AND			PF.[File_id] = FS.[File_id]
+INNER JOIN	dbo.tbl_Product_parameter PP1
+ON			PF.Product_id = PP1.Product_id		
+AND			PF.Period = PP1.Period
+INNER JOIN	dbo.tbl_Product_parameter PP2
+ON			PP2.Product_id = 'GEN' AND PF.Period = PP2.Period
+INNER JOIN	dbo.tbl_Product_parameter PP3
+ON			PP3.Product_id = 'GEN' AND PF.Period = PP3.Period
+WHERE		PP1.Action_Take = 'Portdate'
+AND			PR.Product_id = @Product
+AND			PR.Period = @Period
+AND			PF.[File_id] = @FileID
+AND			PP2.Action_Take = 'ReportingDatabase'
+AND			PP3.Action_Take = 'ReportingServer';
+
+
+
+
+
+
+
+
+
+

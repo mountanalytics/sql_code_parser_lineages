@@ -127,7 +127,7 @@ def create_lineages_df(lineages:list, nodes:pd.DataFrame,  filename:str, destina
     lineages['TARGET_NODE'] = lineages['ID']
     lineages.drop(columns=['ID', 'LABEL_NODE'], inplace=True)
     lineages = lineages.drop_duplicates(subset =['SOURCE', 'TARGET', 'TRANSFORMATION']).reset_index(drop=True)
-    lineages.to_csv(f"data/output-tables/lineages/lineage-{destination}.csv") # save csv
+    lineages.to_csv(f"data/output-tables/lineages/lineage-{destination.replace('.', '_')}.csv") # save csv
 
     return lineages
 
@@ -169,26 +169,69 @@ def extract_lineages(preprocessed_queries:list, nodes:pd.DataFrame) -> list:
     """
 
     lineages_dfs = []
-    reversed_preprocessed_queries = reverse_subqueries(preprocessed_queries)
+    #reversed_preprocessed_queries = reverse_subqueries(preprocessed_queries)
 
-    for idx, query in enumerate(reversed_preprocessed_queries): # for query in queries
-        lineages = []
-        filename = f"file_{idx}"
-        destination =  list(query['main_query'].find_all(exp.Create))[0].this.this.this
-        # insert into try except goes here
-        for component in query.keys(): # for query component (sub/main queries) in query
-            target_columns =[]
-            # preprocess query and extract all useful information
-            ast = query[component]
-            space_table = find_table_w_spaces(ast) # list with tables with spaces (sqlglot cant parse them)
-            alias_table = get_tables(ast) # parse table name + table alias
-            tree = replace_aliases(query[component]) # remove table aliases
-            select_statement, target_columns = extract_target_columns(tree) # extract target columns
-            select_statement = [x.transform(transformer_functions) for x in select_statement] # remove column aliases
-            transformations = extract_transformation(select_statement)
-            target_columns = list(zip(target_columns, transformations)) 
-            query_node, target_node = get_next_nodes(query, component, destination)
-            lineages = extract_lineage(lineages, target_columns, query_node, target_node)
+    for i, query in enumerate(preprocessed_queries): # for query in queries
+        query_node = f"query_{i+1}"
+        if query['type'] == 'update_or_create_select': # or  query['type'] == 'select' ### to add select without create or update
+
+            query = reverse_subquery(query)
+            lineages = []
+            filename = f"file_{i}"
+            destination =  list(query['main_query'].find_all(exp.Create))[0].this.this.this
+            # insert into try except goes here
+            for component in query.keys(): # for query component (sub/main queries) in query
+                target_columns =[]
+                # preprocess query and extract all useful information
+                ast = query[component]
+                space_table = find_table_w_spaces(ast) # list with tables with spaces (sqlglot cant parse them)
+                alias_table = get_tables(ast) # parse table name + table alias
+                tree = replace_aliases(query[component]) # remove table aliases
+                select_statement, target_columns = extract_target_columns(tree) # extract target columns
+                select_statement = [x.transform(transformer_functions) for x in select_statement] # remove column aliases
+                transformations = extract_transformation(select_statement)
+                target_columns = list(zip(target_columns, transformations)) 
+                query_node, target_node = get_next_nodes(query, component, destination)
+                lineages = extract_lineage(lineages, target_columns, query_node, target_node)
+
+                
+        elif query['type'] == 'update_or_create_set':
+
+            lineages = []
+
+            ast = replace_aliases(query['modified_SQL_query'])
+            ast = replace_alias_update_table(ast)
+
+            update = list(ast.find_all(exp.Update))[0]
+
+            destination_db =  str(list(ast.find_all(exp.Update))[0].this.db)
+            destination =  str(list(ast.find_all(exp.Update))[0].this.this)
+
+            tables = []
+
+            columns = list(update.expressions)
+
+            for column in list(update.expressions):     
+
+                target_col =str(list(column.this.find_all(exp.Column))[0]) if len(list(column.this.find_all(exp.Column))) == 1 else None 
+                source_col = str(list(column.expression.find_all(exp.Column))[0]) if len(list(column.expression.find_all(exp.Column))) == 1 else None
+                transformation = str(column.expression) if str(column.expression) != source_col else ""
+                value = str(list(column.expression.find_all(exp.Literal))[0]) if len(list(column.expression.find_all(exp.Literal))) == 1 else None
+
+                
+                if source_col != None:
+                    lineages.append({'SOURCE': f"{source_col}", 'TARGET': f"{query_node}.{source_col.split('.')[-1]}", 'TRANSFORMATION': ""})
+                    lineages.append({'SOURCE': f"{query_node}.{source_col.split('.')[-1]}", 'TARGET': f"{target_col}", 'TRANSFORMATION': transformation})
+                else:
+                    value = f"value: {value}"
+
+                    lineages.append({'SOURCE': f"{query_node}.{value}", 'TARGET': f"{target_col}", 'TRANSFORMATION': ""})
+
+                from_statement = list(update.find_all(exp.From))
+
+     
+
+
 
         lineages_df = create_lineages_df(lineages, nodes, filename, destination)
         lineages_dfs.append(lineages_df)
