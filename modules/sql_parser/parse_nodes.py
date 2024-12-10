@@ -8,6 +8,14 @@ import json
 import re
 
 
+def parse_query(query: str) -> sqlglot.expressions:
+    """
+    Parses to convert query string to a sqlglot parsed tree
+    """
+    ast = parse_one(query)
+    trial1 = repr(ast)
+    return ast
+
 
 def parse_tables(table, table_alias_list, subquery=True):    
     """
@@ -63,7 +71,7 @@ def replace_aliases(ast: sqlglot.expressions) -> sqlglot.expressions:
     """
     Replaces the tables' aliases in a query
     """
-    ast = list(ast.find_all(exp.Select))[0]
+    #ast = list(ast.find_all(exp.Select))[0]
     alias_table = get_tables(ast)
     
     def transformer_table(node):
@@ -105,7 +113,9 @@ def extract_where_statements(tree: sqlglot.expressions) -> str:
     """
     where_exp = list(tree.find_all(exp.Where))
     if where_exp != []:
-        where_exp = str(where_exp[0].this).split(' AS')[0]# table
+        where_exp = str(where_exp[0].this.sql('tsql')).split(' AS')[0]# table
+        #where_exp = sql_to_natural_language(str(where_exp[0].this.sql('tsql'))).split(' AS')[0]# table
+
     else:
         where_exp = None
     return where_exp
@@ -123,7 +133,8 @@ def extract_on_statements(tree: sqlglot.expressions) -> list:
     on_conditions = []
     for join in joins:
         try:
-            on_conditions.append(f"{list(join.find_all(exp.EQ))[0].this.table}.{list(join.find_all(exp.EQ))[0].this.this} = {list(join.find_all(exp.EQ))[0].expression.table}.{list(join.find_all(exp.EQ))[0].expression.this}")
+            on_conditions.append(join.sql('tsql'))
+            #on_conditions.append(f"{list(join.find_all(exp.EQ))[0].this.table}.{list(join.find_all(exp.EQ))[0].this.this} = {list(join.find_all(exp.EQ))[0].expression.table}.{list(join.find_all(exp.EQ))[0].expression.this}")
         except:
             return []
         
@@ -204,8 +215,14 @@ def append_convert_nodes_to_df(nodes_dataframes:list, nodes:list) -> pd.DataFram
     Converts a node (list of dictionaries) to dataframe and appends it to list
     """
     nodes = pd.DataFrame(nodes)
+
     nodes['COLOR'] = nodes.apply(
-        lambda row: row['COLOR'] if pd.isnull(row['FILTER']) and pd.isnull(row['ON']) else '#db59a5', 
+        lambda row: row['COLOR'] if row['FILTER'] == None else '#db59a5',
+        axis=1
+    )
+
+    nodes['COLOR'] = nodes.apply(
+        lambda row: row['COLOR'] if (row['ON'] == None and row['COLOR'] != '#db59a5') else '#db59a5',
         axis=1
     )
 
@@ -219,13 +236,11 @@ def create_nodes_df(nodes_dfs:list) -> pd.DataFrame:
     """
     nodes = pd.concat(nodes_dfs).reset_index(drop=True)
     nodes['ON'] = nodes['ON'].apply(lambda x: None if x == [] else x) # remove empty lists
-    nodes = nodes.drop_duplicates(subset=['NAME_NODE', 'LABEL_NODE', 'FILTER', 'FUNCTION']).reset_index(drop=True)
+    nodes = nodes.drop_duplicates(subset=['NAME_NODE', 'LABEL_NODE', 'FUNCTION']).reset_index(drop=True)
     nodes['ID'] = nodes.index
     nodes.to_csv('data/output-tables/nodes.csv') # save df
 
     return nodes
-
-
 
 
 
@@ -239,79 +254,64 @@ def reverse_subquery(query:dict) -> dict:
     return reversed_query
 
 
+def replace_alias_update_table(ast: sqlglot.expressions) -> sqlglot.expressions:
+    """
+    Replaces the tables' aliases in a query
+    """
+    update_table = list(ast.find_all(exp.Update))[0].this#.find_all(exp.Table)
+    #print(repr(list(ast.find_all(exp.Update))[0]))
+    try:
+        from_tables = list(list(ast.find_all(exp.From))[0].find_all(exp.Table))[0]
+        db = from_tables.db
+        table = from_tables.this
+        alias = from_tables.alias
 
-def parse_update_or_create_select_nodes(query, i):
+        # if alias == update_table:
+        ast = ast.transform(lambda node: sqlglot.exp.Table(this=f"{db}.{table}") if node.this == alias else node)
+        
+    except:
+        pass
+
+    return ast
+
+
+def sql_to_natural_language(sql_where_clause):
+    """
+    Converts a SQL WHERE clause into a natural language explanation.
+
+    Parameters:
+        sql_where_clause (str): The SQL WHERE clause to be translated.
+
+    Returns:
+        str: The natural language explanation.
+    """
+    # Replace common SQL syntax with natural language equivalents
+    replacements = [
+        (r"\bAND\b", "and"),
+        (r"\bOR\b", "or"),
+        (r"=", "equals"),
+        (r"IN \((.*?)\)", r"is one of \1"),
+        (r"LIKE '%(.*?)%'", r"contains '\1'"),
+        (r"LIKE '(.*?)%'", r"starts with '\1'"),
+        (r"LIKE '%(.*?)'", r"ends with '\1'"),
+        (r"\(\s*(.*?)\s*\)", r"(\1)")  # Remove extra spaces inside parentheses
+    ]
     
-    query_subqueries = reverse_subquery(query)
+    natural_lang = sql_where_clause.strip()
+    for pattern, replacement in replacements:
+        natural_lang = re.sub(pattern, replacement, natural_lang, flags=re.IGNORECASE)
 
-    filename = f"file_{i}"
-    nodes = []
-
-    for name_query in query_subqueries:
-        ast = query_subqueries[name_query]
-
-        select_statement_big = clean_query(query_subqueries[name_query])
-
-        source_tables = []
-        # for every select statement in query, extract the source tables, where expressions and on conditions
-        for select in list(select_statement_big):
-            source_table, where_exp, on_condition = get_statements(select) 
-            source_tables += source_table            
-
-        if 'subquery' in name_query: # if the query is a subquery then the name is the dict key, else the name is the target table
-            nodes = add_node_subquery(nodes, name_query, filename, where_exp, on_condition)
-        else:
-            nodes, destination = add_node_mainquery(nodes, ast, where_exp, on_condition)
-        nodes = add_node_sourcetables(nodes, source_tables, filename, on_condition)
-
-    return nodes
-
-
-def parse_update_or_create_set_nodes(query, query_node):
-    nodes = []
-    tables = []
-
-    ast = query['modified_SQL_query']
-    update = list(ast.find_all(exp.Update))[0]
-
-    # join statements
-    join  = list(ast.find_all(exp.Join))#[0]
-
-    if join != []:
-        for j in join:
-            table = list(j.find_all(exp.Table))
-            for t in table:
-                tables.append({"table": t})
-                nodes.append({'NAME_NODE': f"{str(t.db)}.{str(t.this)}",'LABEL_NODE': f"{str(t.db)}.{str(t.this)}", 'FILTER': None, 'FUNCTION': 'DataSources', 'ON': None, 'COLOR': "#42d6a4"})
-
-    where_exp  = list(ast.find_all(exp.Where))
-    if where_exp != []:
-        where_exp = where_exp[0].sql('tsql')
-    else:
-        where_exp = None
+    # Add a period after OR conditions for better readability
+    groups = re.split(r"\\s*\\bOR\\b\\s*", natural_lang, flags=re.IGNORECASE)
+    explanation = []
     
-    on_condition = "\n".join([i.sql('tsql') for i in list(ast.find_all(exp.Join))])
-
-    target_db = str(list(ast.find_all(exp.Update))[0].this.db)
-    target_node = str(list(ast.find_all(exp.Update))[0].this.this)
-    destination=target_node
-
-    #query_node = f"query_{target_node}"
-
-    # source
-    nodes.append({'NAME_NODE':f"{target_db}.{target_node}",'LABEL_NODE': f"{target_db}.{target_node}", 'FILTER': None, 'FUNCTION': 'DataSources', 'ON': None, 'COLOR': "#42d6a4"})
-    # query
-    nodes.append({'NAME_NODE': query_node,'LABEL_NODE': query_node, 'FILTER': where_exp, 'FUNCTION': 'query', 'ON': str(on_condition), 'COLOR': '#d0d3d3'})
-    # target
-    #nodes.append({'NAME_NODE': f"{target_db}.{target_node}",'LABEL_NODE': f"{target_db}.{target_node}", 'FILTER': None, 'FUNCTION': 'target', 'ON': on_condition, 'COLOR': "#42d6a4"})
-    return nodes
-
-
-def parse_declare_nodes(query):
-    nodes = []
-    variable = [i.replace('@', '') for i in re.findall(r"@\w+", query['modified_SQL_query'])][0]
-    nodes.append({'NAME_NODE': variable,'LABEL_NODE': variable, 'FILTER': None, 'FUNCTION': 'variable', 'ON': None, 'COLOR': "#42d6a4"})
-
+    for group in groups:
+        # Keep AND intact in the explanation
+        readable_group = re.sub(r"\\s*\\bAND\\b\\s*", " and ", group)
+        explanation.append(f"{readable_group.strip()}")
+    
+    # Rejoin with " or "
+    return " or ".join(explanation)
 
 
 def extract_nodes(preprocessed_queries:list) -> pd.DataFrame:
@@ -319,6 +319,7 @@ def extract_nodes(preprocessed_queries:list) -> pd.DataFrame:
     Orchestrates the extraction of the nodes from a list of queries, the output being a nodes pd.DataFrame
     """
 
+    #reversed_preprocessed_queries = reverse_subqueries(preprocessed_queries)
     # create nodes
     nodes_dfs = []
     queries= []
@@ -328,22 +329,135 @@ def extract_nodes(preprocessed_queries:list) -> pd.DataFrame:
         query_node = f"query_{i+1}"
 
         if query['type'] == 'update_or_create_select': # or  query['type'] == 'select' ### to add select without create or update
-            nodes = parse_update_or_create_select_nodes(query, i)
+
+            query_subqueries = reverse_subquery(query)
+
+            filename = f"file_{i}"
+            nodes = []
+            for name_query in query_subqueries:
+                ast = query_subqueries[name_query]
+                # CLEAN QUERY
+                select_statement_big = clean_query(query_subqueries[name_query])
+
+                source_tables = []
+                # for every select statement in query, extract the source tables, where expressions and on conditions
+                for select in list(select_statement_big):
+                    source_table, where_exp, on_condition = get_statements(select) 
+                    source_tables += source_table            
+
+                if 'subquery' in name_query: # if the query is a subquery then the name is the dict key, else the name is the target table
+                    nodes = add_node_subquery(nodes, name_query, filename, where_exp, on_condition)
+                else:
+                    nodes = add_node_mainquery(nodes, ast, where_exp, on_condition)
+                nodes = add_node_sourcetables(nodes, source_tables, filename, on_condition)
+            nodes_dfs = append_convert_nodes_to_df(nodes_dfs, nodes)
 
 
         elif query['type'] == 'update_or_create_set':
-            nodes = parse_update_or_create_set_nodes(query, query_node)
 
+
+            def split_on_and_or(input_string):
+                # Define a pattern to match "and" or "or" and capture the surrounding text
+                pattern = r'(\b(?:and|or)\b)'
+                
+                # Use re.split to include delimiters (and/or) in the result
+                parts = re.split(pattern, input_string, flags=re.IGNORECASE)
+                
+                result = []
+                buffer = ""
+                
+                for part in parts:
+                    stripped = part.strip()
+                    if stripped.lower() in {"and", "or"}:
+                        # When encountering "and" or "or", save the current buffer
+                        if buffer:
+                            result.append(buffer.strip())
+                            buffer = ""
+                        buffer = stripped
+                    else:
+                        # Append the current part to the buffer
+                        if buffer:
+                            buffer += " " + stripped
+                        else:
+                            buffer = stripped
+                
+                if buffer:
+                    result.append(buffer.strip())
+                
+                return result
+            nodes = []
+            tables = []
+
+            ast = query['modified_SQL_query']
+            ast =replace_alias_update_table(ast)
+            update = list(ast.find_all(exp.Update))[0]
+
+            # join statements
+            join  = list(ast.find_all(exp.Join))#[0]
+
+            if join != []:
+                for j in join:
+                    table = list(j.find_all(exp.Table))
+                    for t in table:
+                        tables.append({"table": t})
+                        nodes.append({'NAME_NODE': f"{str(t.db)}.{str(t.this)}",'LABEL_NODE': f"{str(t.db)}.{str(t.this)}", 'FILTER': None, 'FUNCTION': 'DataSources', 'ON': None, 'COLOR': "#42d6a4"})
+
+            where_exp  = list(ast.find_all(exp.Where))
+            if where_exp != []:
+                where_exp =  split_on_and_or(sql_to_natural_language(where_exp[0].sql('tsql')))#.split('AND')
+            else:
+                where_exp = None
+            
+            on_condition = split_on_and_or("\n".join([i.sql('tsql') for i in list(ast.find_all(exp.Join))]))
+            #on_condition = [i.sql('tsql') for i in list(ast.find_all(exp.Join))]#.split('AND')
+
+
+            target_db = str(list(ast.find_all(exp.Update))[0].this.db)+ "." if str(list(ast.find_all(exp.Update))[0].this.db)!="" else ""
+            target_node = str(list(ast.find_all(exp.Update))[0].this.this)
+            destination=target_node
+
+            #query_node = f"query_{target_node}"
+
+            # source
+            nodes.append({'NAME_NODE':f"{target_db}{target_node}",'LABEL_NODE': f"{target_db}{target_node}", 'FILTER': None, 'FUNCTION': 'DataSources', 'ON': None, 'COLOR': "#42d6a4"})
+            # query
+            nodes.append({'NAME_NODE': query_node,'LABEL_NODE': query_node, 'FILTER': where_exp, 'FUNCTION': 'query', 'ON': str(on_condition), 'COLOR': '#d0d3d3'})
+            # target
+            #nodes.append({'NAME_NODE': f"{target_db}.{target_node}",'LABEL_NODE': f"{target_db}.{target_node}", 'FILTER': None, 'FUNCTION': 'target', 'ON': on_condition, 'COLOR': "#42d6a4"})
+            nodes_dfs = append_convert_nodes_to_df(nodes_dfs, nodes)
+
+        elif query['type'] == 'while_delete':
+            where_exp = list(ast.find_all(exp.Where))
+            tables = list(ast.find_all(exp.Table))
+
+
+            nodes.append({'NAME_NODE': query_node,'LABEL_NODE': query_node, 'FILTER': 'DELETE ' + sql_to_natural_language(where_exp[0].sql('tsql')), 'FUNCTION': 'query', 'ON': str(on_condition), 'COLOR': '#d0d3d3'})
+
+            nodes_dfs = append_convert_nodes_to_df(nodes_dfs, nodes)
 
         elif query['type'] == 'declare':
-            nodes = parse_declare_nodes(query)
-
-        else:
-            nodes = None
-
-
-        if nodes != None:
+            variable = re.findall(r'@\w+', query['modified_SQL_query'])[0]
+            nodes.append({'NAME_NODE': variable,'LABEL_NODE': variable, 'FILTER': None, 'FUNCTION': 'variable', 'ON': None, 'COLOR': '#d0d3d3'})
             nodes_dfs = append_convert_nodes_to_df(nodes_dfs, nodes)
+
+            #print(variable)
+
+        
+        elif query['type'] == 'if_not_exists':
+            variable = re.findall(r'@\w+', query['modified_SQL_query'])[-1]
+
+            nodes.append({'NAME_NODE': variable,'LABEL_NODE': variable, 'FILTER': query['modified_SQL_query'], 'FUNCTION': 'query', 'ON': None, 'COLOR': '#d0d3d3'})
+            nodes_dfs = append_convert_nodes_to_df(nodes_dfs, nodes)
+        
+        elif query['type'] == 'truncate':
+            table = query['modified_SQL_query'].split()[-1]
+            #print(table)
+            nodes.append({'NAME_NODE': table,'LABEL_NODE': table, 'FILTER': None, 'FUNCTION': 'DataSources', 'ON': str(on_condition), 'COLOR': '#d0d3d3'})
+
+            nodes.append({'NAME_NODE': query_node,'LABEL_NODE': query_node, 'FILTER': query['modified_SQL_query'], 'FUNCTION': 'query', 'ON': None, 'COLOR': '#d0d3d3'})
+
+
+
 
     nodes = create_nodes_df(nodes_dfs)
     

@@ -262,14 +262,14 @@ def preprocess_queries(dir:str) -> dict:
     sql_queries = open_queries(dir)
 
     for i, query in enumerate(sql_queries):
+        query = query.replace("GETDATE()", "CURRENT_TIMESTAMP")
   
 
-        if 'declare' not in query.lower() and ('select' in query.lower() or 'set' in query.lower()):
+        if 'declare' not in query.lower() and 'if not exists' not in query.lower() and ('select' in query.lower() or 'set' in query.lower()):
             # parse
             #ast = sqlglot.parse_one(query, dialect = 'tsql')
-            print(query)
             ast = parse_one(replace_spaces_in_brackets(query).replace('[', '').replace(']', ''))
-            ast = replace_aliases(ast)
+            #ast = replace_aliases(ast)
 
             subqueries = extract_subqueries(ast)
 
@@ -286,14 +286,21 @@ def preprocess_queries(dir:str) -> dict:
                 subqueries_transformed_json[name] = subquery_transformed.sql()
 
 
-        if 'select' in query.lower() and ('update' in query.lower() or 'create' in query.lower()):
+        if 'if not exists' in query.lower() :#and 'set' in query.lower():
+
+            preprocessed_query_json = {'modified_SQL_query': replace_spaces_in_brackets(query).replace('[', '').replace(']', ''), 'subquery_dictionary': '', 'type': 'if_not_exists'}
+            save_preprocessed_query(preprocessed_query_json, i)
+            preprocessed_query = {'modified_SQL_query': replace_spaces_in_brackets(query).replace('[', '').replace(']', ''), 'subquery_dictionary': '', 'type': 'if_not_exists'}
+            preprocessed_queries.append(preprocessed_query)
+
+        elif 'select' in query.lower() and ('update' in query.lower() or 'create' in query.lower() or 'insert' in query.lower()):
             
             preprocessed_query_json = {'modified_SQL_query': main_query.sql(), 'subquery_dictionary': subqueries_transformed_json, 'type': 'update_or_create_select'}
             save_preprocessed_query(preprocessed_query_json, i)
             preprocessed_query = {'modified_SQL_query': main_query, 'subquery_dictionary': subqueries_transformed, 'type': 'update_or_create_select'}
             preprocessed_queries.append(preprocessed_query)
 
-        elif 'select' in query.lower() and not ('update' in query.lower() or 'create' in query.lower()):
+        elif 'select' in query.lower() and not ('update' in query.lower() or 'create' in query.lower() or 'insert' in query.lower()):
             
             preprocessed_query_json = {'modified_SQL_query': main_query.sql(), 'subquery_dictionary': subqueries_transformed_json, 'type': 'select'}
             save_preprocessed_query(preprocessed_query_json, i)
@@ -312,6 +319,18 @@ def preprocess_queries(dir:str) -> dict:
             preprocessed_query = {'modified_SQL_query': query, 'subquery_dictionary': '', 'type': 'declare'}
             preprocessed_queries.append(preprocessed_query)
 
+        elif 'while' in query.lower() and 'delete top' in query.lower():
+            preprocessed_query_json = {'modified_SQL_query': replace_spaces_in_brackets(query).replace('[', '').replace(']', ''), 'subquery_dictionary': '', 'type': 'while_delete'}
+            save_preprocessed_query(preprocessed_query_json, i)
+            preprocessed_query = {'modified_SQL_query': replace_spaces_in_brackets(query).replace('[', '').replace(']', ''), 'subquery_dictionary': '', 'type': 'while_delete'}
+            preprocessed_queries.append(preprocessed_query)
+
+        elif 'truncate' in query.lower():
+            preprocessed_query_json = {'modified_SQL_query': replace_spaces_in_brackets(query).replace('[', '').replace(']', ''), 'subquery_dictionary': '', 'type': 'truncate'}
+            save_preprocessed_query(preprocessed_query_json, i)
+            preprocessed_query = {'modified_SQL_query': replace_spaces_in_brackets(query).replace('[', '').replace(']', ''), 'subquery_dictionary': '', 'type': 'truncate'}
+            preprocessed_queries.append(preprocessed_query)
+
         else:
             preprocessed_query_json = {'modified_SQL_query': query, 'subquery_dictionary': '', 'type': 'other'}
             save_preprocessed_query(preprocessed_query_json, i)
@@ -319,12 +338,129 @@ def preprocess_queries(dir:str) -> dict:
             preprocessed_queries.append(preprocessed_query)
 
 
+    return preprocessed_queries
 
+
+def preprocess_queries_ssis(queries:str) -> dict:
+    """
+    Orchestrates the preprocessing and extraction of the SQL queries
+    """
+    preprocessed_queries = []
+
+    for i, query in enumerate(queries.split(';')):
+        query = query.strip()
+        query = query.replace("GETDATE()", "CURRENT_TIMESTAMP")
+  
+
+        if 'declare' not in query.lower() and 'if not exists' not in query.lower() and ('select' in query.lower() or 'set' in query.lower()):
+            # parse
+            #ast = sqlglot.parse_one(query, dialect = 'tsql')
+            ast = parse_one(replace_spaces_in_brackets(query).replace('[', '').replace(']', ''))
+            #ast = replace_aliases(ast)
+
+            subqueries = extract_subqueries(ast)
+
+            # extract subqueries from main query
+            main_query = replace_subquery_with_table_in_main_query(ast, subqueries)
+
+            subqueries_transformed = {}
+            subqueries_transformed_json = {}
+
+            # extract subqueries from subqueries
+            for name, subquery in subqueries.items():
+                subquery_transformed = replace_subquery_with_table_in_subqueries(subquery, subqueries)
+                subqueries_transformed[name] = subquery_transformed
+                subqueries_transformed_json[name] = subquery_transformed.sql()
+
+
+        if 'if not exists' in query.lower() :#and 'set' in query.lower():
+
+            preprocessed_query_json = {'modified_SQL_query': replace_spaces_in_brackets(query).replace('[', '').replace(']', ''), 'subquery_dictionary': '', 'type': 'if_not_exists'}
+            save_preprocessed_query(preprocessed_query_json, i)
+            preprocessed_query = {'modified_SQL_query': replace_spaces_in_brackets(query).replace('[', '').replace(']', ''), 'subquery_dictionary': '', 'type': 'if_not_exists'}
+            preprocessed_queries.append(preprocessed_query)
+
+        elif 'select' in query.lower() and ('update' in query.lower() or 'create' in query.lower() or 'insert' in query.lower()):
+            
+            preprocessed_query_json = {'modified_SQL_query': main_query.sql(), 'subquery_dictionary': subqueries_transformed_json, 'type': 'update_or_create_select'}
+            save_preprocessed_query(preprocessed_query_json, i)
+            preprocessed_query = {'modified_SQL_query': main_query, 'subquery_dictionary': subqueries_transformed, 'type': 'update_or_create_select'}
+            preprocessed_queries.append(preprocessed_query)
+
+        elif 'select' in query.lower() and not ('update' in query.lower() or 'create' in query.lower() or 'insert' in query.lower()):
+            
+            preprocessed_query_json = {'modified_SQL_query': main_query.sql(), 'subquery_dictionary': subqueries_transformed_json, 'type': 'select'}
+            save_preprocessed_query(preprocessed_query_json, i)
+            preprocessed_query = {'modified_SQL_query': main_query, 'subquery_dictionary': subqueries_transformed, 'type': 'select'}
+            preprocessed_queries.append(preprocessed_query)
+
+        elif ('update' in query.lower() and 'set' in query.lower()) or ('create' in query.lower() and 'set'in query.lower()) and 'select' not in query.lower():
+            preprocessed_query_json = {'modified_SQL_query': main_query.sql(), 'subquery_dictionary': subqueries_transformed_json, 'type': 'update_or_create_set'}
+            save_preprocessed_query(preprocessed_query_json, i)
+            preprocessed_query = {'modified_SQL_query': main_query, 'subquery_dictionary': subqueries_transformed, 'type': 'update_or_create_set'}
+            preprocessed_queries.append(preprocessed_query)
+
+        elif 'declare' in query.lower():
+            preprocessed_query_json = {'modified_SQL_query': query, 'subquery_dictionary': '', 'type': 'declare'}
+            save_preprocessed_query(preprocessed_query_json, i)
+            preprocessed_query = {'modified_SQL_query': query, 'subquery_dictionary': '', 'type': 'declare'}
+            preprocessed_queries.append(preprocessed_query)
+
+        elif 'while' in query.lower() and 'delete top' in query.lower():
+            preprocessed_query_json = {'modified_SQL_query': replace_spaces_in_brackets(query).replace('[', '').replace(']', ''), 'subquery_dictionary': '', 'type': 'while_delete'}
+            save_preprocessed_query(preprocessed_query_json, i)
+            preprocessed_query = {'modified_SQL_query': replace_spaces_in_brackets(query).replace('[', '').replace(']', ''), 'subquery_dictionary': '', 'type': 'while_delete'}
+            preprocessed_queries.append(preprocessed_query)
+
+        elif 'truncate' in query.lower():
+            preprocessed_query_json = {'modified_SQL_query': replace_spaces_in_brackets(query).replace('[', '').replace(']', ''), 'subquery_dictionary': '', 'type': 'truncate'}
+            save_preprocessed_query(preprocessed_query_json, i)
+            preprocessed_query = {'modified_SQL_query': replace_spaces_in_brackets(query).replace('[', '').replace(']', ''), 'subquery_dictionary': '', 'type': 'truncate'}
+            preprocessed_queries.append(preprocessed_query)
+
+        else:
+            preprocessed_query_json = {'modified_SQL_query': query, 'subquery_dictionary': '', 'type': 'other'}
+            save_preprocessed_query(preprocessed_query_json, i)
+            preprocessed_query = {'modified_SQL_query': query, 'subquery_dictionary': '', 'type': 'other'}
+            preprocessed_queries.append(preprocessed_query)
 
 
     return preprocessed_queries
 
 
+#def preprocess_queries(dir:str) -> dict:
+#    """
+#    Orchestrates the preprocessing and extraction of the SQL queries
+#    """
+#    preprocessed_queries = []
+#    sql_queries = open_queries(dir)
+#
+#    for i, query in enumerate(sql_queries):
+#        # parse
+#        ast = sqlglot.parse_one(query, dialect = 'tsql')
+#
+#        subqueries = extract_subqueries(ast)
+#
+#        # extract subqueries from main query
+#        main_query = replace_subquery_with_table_in_main_query(ast, subqueries)
+#
+#        subqueries_transformed = {}
+#        subqueries_transformed_json = {}
+#
+#        # extract subqueries from subqueries
+#        for name, subquery in subqueries.items():
+#            subquery_transformed = replace_subquery_with_table_in_subqueries(subquery, subqueries)
+#            subqueries_transformed[name] = subquery_transformed
+#            subqueries_transformed_json[name] = subquery_transformed.sql()
+#
+#        preprocessed_query_json = {'modified_SQL_query': main_query.sql(), 'subquery_dictionary': subqueries_transformed_json}
+#        save_preprocessed_query(preprocessed_query_json, i)
+#
+#        preprocessed_query = {'modified_SQL_query': main_query, 'subquery_dictionary': subqueries_transformed}
+#        preprocessed_queries.append(preprocessed_query)
+#
+#    return preprocessed_queries
+
+
 if __name__ == '__main__':
     preprocess_queries('data/queries-txts/queries_rabo_qrm.txt')
-

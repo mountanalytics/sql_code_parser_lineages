@@ -5,17 +5,17 @@ where
 	Level_4 = 'Fixed Rate Mortgages'
 	and Forward_Starting = 'FS'
 	and [Funding Component] in ('Basefundinginterest', 'Principal', 'Total Value')
-	and market_shock not in ('Book Value', 'Face Amount', Net WAC', 'WAL_0')
+	and market_shock not in ('Book Value', 'Face Amount', 'Net WAC', 'WAL_0')
 )
 or
 (
 	instrument_set = 'Mortgage Proposal'
 	and [Funding Component] in ('Basefundinginterest', 'Principal', 'Total Value')
-	and market_shock not in ('Book Value', 'Face Amount', Net WAC', 'WAL_0')
+	and market_shock not in ('Book Value', 'Face Amount', 'Net WAC', 'WAL_0')
 )
 And
 (
-	Portfolio likie '%OBV' or Portfolio like '%ABB'
+	Portfolio like '%OBV' or Portfolio like '%ABB'
 );
 
 
@@ -48,10 +48,6 @@ WHERE
 		OR Portfolio LIKE '%ABB'
 		);
 
--------------------------------------------------
-UPDATE [dbo].[tbl_SSISJob]
-SET Duration = CONVERT(VARCHAR, GETDATE() - RunDate, 108),Result = ? WHERE SSIS_JobID = ?;
--------------------------------------------------
 
 SELECT COUNT(*)
 FROM [dbo].[REP_Discount_Factors]
@@ -76,7 +72,6 @@ WHILE 1=1
 	END
 GO;
 
----------------------------------------------------
 
 DECLARE @PortfolioCurrent varchar(255)	=	?;
 DECLARE @Market date			=	?;
@@ -89,7 +84,7 @@ SELECT convert(INT,forecastid) as forcastid FROM QRM.Run_Time_Description WHERE
  AND Convert(Date,Market) = Convert(Date,@Market)
  AND Strategy like @LikeMatchGap
  AND CompanyName = @CompanyName
- AND DateTimeStamp = (select max(DateTimeStamp) FROM [QRM].[Run_Time_Description] where CompanyName = @CompanyName AND AND Portfolio = @PortfolioCurrent);
+ AND DateTimeStamp = (select max(DateTimeStamp) FROM [QRM].[Run_Time_Description] where CompanyName = @CompanyName AND Portfolio = @PortfolioCurrent);
 
 DECLARE @PortfolioCurrent varchar(255)	=	'5/31/2024';
 DECLARE @Entity varchar(10)	=	'OBV';
@@ -97,14 +92,14 @@ DECLARE @DataSetEmpty bit = 0;
 
 IF NOT EXISTS (
 	SELECT 1
-	FROIM exp.MDSStoBETValuationResult
+	FROM exp.MDSStoBETValuationResult
 	WHERE Entity = @Entity
 	and CONVERT(date, PortfolioAsOfDate) = CONVERT(date, @PortfolioCurrent)
 )
 SET @DataSetEmpty = 1;
 
 
-------------------------------------------------------
+
 
 Select		FBA_CNT+
 		FSH_CNT+
@@ -120,11 +115,11 @@ truncate table [staging].[FTP_Base];
 truncate table [staging].[FTP_Shocks];
 truncate table [staging].[FTP_Unpivot];
 
-------------------------------------------
+
 DROP TABLE IF EXISTS [dbo].[FTP_Base_Assumption_Staging];
 
 
------------------------------------------
+
 DECLARE @Product AS CHAR(3)	= ?;
 DECLARE @Period AS VARCHAR(6)	= ?;
 DECLARE @FileID AS SMALLINT	= ?;
@@ -162,7 +157,7 @@ AND			PP3.Action_Take = 'ReportingServer'
 AND			PR.Product_id = @Product
 AND			PR.Period = @Period
 AND			PF.[File_id] = @FileID;
-------------------------------------------------
+
 
 
 
@@ -180,7 +175,7 @@ truncate table [staging].[Forecast_Periods];
 truncate table [staging].[GAP];
 
 
--------------------------------------------------------------------------------------------------------------------
+
 
 
 Update gap
@@ -192,7 +187,7 @@ on
  cp.[Intercompany_Legal_Entity] = gap.Intercompany_Legal_Entity
  and cp.[Intercompany_Counterparty] = gap.[Intercompany_Counterparty];
 
--------------------------------------------------------------------------------------------------------------------
+
 
 
 Update staging.GAP_DCF_Intermediate
@@ -213,7 +208,7 @@ And
 	Entity in ('OBV','ABB')
 );
 
--------------------------------------------------------------------------------------------------------------------
+
 DECLARE @Product AS CHAR(3)	= ?;
 DECLARE @Period AS VARCHAR(6)	= ?;
 DECLARE @FileID AS INT		= ?;

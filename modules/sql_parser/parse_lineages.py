@@ -125,16 +125,7 @@ def create_lineages_df(lineages:list, nodes:pd.DataFrame,  filename:str, destina
     lineages['TARGET_NODE'] = lineages['ID']
     lineages.drop(columns=['ID', 'LABEL_NODE'], inplace=True)
     lineages = lineages.drop_duplicates(subset =['SOURCE', 'TARGET', 'TRANSFORMATION']).reset_index(drop=True)
-
-
-    filename = f"data/output-tables/lineages/lineage-{destination}.csv"
-    counter = 1 
-    while os.path.exists(filename):
-        filename = f"data/output-tables/lineages/lineage-{destination}_{counter}.csv"
-        counter += 1
-
-    lineages.to_csv(filename)
-
+    lineages.to_csv(f"data/output-tables/lineages/lineage-{destination.replace('.', '_')}.csv") # save csv
 
     return lineages
 
@@ -170,105 +161,74 @@ def extract_lineage(lineages:list, target_columns:list, query_node:str, target_n
     return lineages
 
 
-def parse_update_or_create_select_lineages(query, query_node):
-    lineages = []
-
-    query = reverse_subquery(query)
-
-    destination =  list(query['main_query'].find_all(exp.Create))[0].this.this.this
-    # insert into try except goes here
-    for component in query.keys(): # for query component (sub/main queries) in query
-        target_columns =[]
-        # preprocess query and extract all useful information
-        ast = query[component]
-        space_table = find_table_w_spaces(ast) # list with tables with spaces (sqlglot cant parse them)
-        alias_table = get_tables(ast) # parse table name + table alias
-        tree = replace_aliases(query[component]) # remove table aliases
-        select_statement, target_columns = extract_target_columns(tree) # extract target columns
-        select_statement = [x.transform(transformer_functions) for x in select_statement] # remove column aliases
-        transformations = extract_transformation(select_statement)
-        target_columns = list(zip(target_columns, transformations)) 
-        _, target_node = get_next_nodes(query, component, destination)
-        lineages = extract_lineage(lineages, target_columns, query_node, target_node)
-    return lineages, destination
-
-
-
-def parse_update_or_create_set_lineages(query, query_node):
-
-    lineages = []
-
-    ast = query['modified_SQL_query']
-    update = list(ast.find_all(exp.Update))[0]
-
-    destination_db =  str(list(ast.find_all(exp.Update))[0].this.db)
-    destination =  str(list(ast.find_all(exp.Update))[0].this.this)
-
-    tables = []
-
-    columns = list(update.expressions)
-
-    #query_node = f'query_{destination}'
-
-    
-    #counter = 1 
-    #while query_node in query_nodes: # if the query node already exist name another differently
-    #    query_node = f"{query_node}_{counter}"
-    #    counter += 1
-    #    print(query_node)
-#
-    #query_nodes.append(query_node)
-
-    for column in list(update.expressions):
-
-
-        target_col =str(list(column.this.find_all(exp.Column))[0]) if len(list(column.this.find_all(exp.Column))) == 1 else None  
-        source_col = str(list(column.expression.find_all(exp.Column))[0]) if len(list(column.expression.find_all(exp.Column))) == 1 else None
-        value = str(list(column.expression.find_all(exp.Literal))[0]) if len(list(column.expression.find_all(exp.Literal))) == 1 else None
-
-
-
-
-        if value != None:
-            value = f"value: {value}"
-            lineages.append({'SOURCE': f"{query_node}.{value}", 'TARGET': f"{target_col}", 'TRANSFORMATION': ""})
-        else:
-            lineages.append({'SOURCE': f"{source_col}", 'TARGET': f"{query_node}.{source_col.split('.')[-1]}", 'TRANSFORMATION': ""})
-            lineages.append({'SOURCE': f"{query_node}.{source_col.split('.')[-1]}", 'TARGET': f"{target_col}", 'TRANSFORMATION': ""})
-
-
-        from_statement = list(update.find_all(exp.From))
-        #if from_statement != []:
-        #    lineages.append({'SOURCE': f"{target_col}", 'TARGET': f"{query_node}.{source_col.split('.')[-1]}", 'TRANSFORMATION': ""})
-    return lineages, destination
-
 def extract_lineages(preprocessed_queries:list, nodes:pd.DataFrame) -> list:
     """
     Orchestrates the extraction of the lineages from each query, the result is a list of pd.DataFrame, one for each query
     """
 
     lineages_dfs = []
-    query_nodes = []
+    #reversed_preprocessed_queries = reverse_subqueries(preprocessed_queries)
 
     for i, query in enumerate(preprocessed_queries): # for query in queries
-
-        filename = f"file_{i}"
         query_node = f"query_{i+1}"
-    
+        if query['type'] == 'update_or_create_select': # or  query['type'] == 'select' ### to add select without create or update
 
-        if query['type'] == 'update_or_create_select': 
-            lineages, destination = parse_update_or_create_select_lineages(query, query_node)
+            query = reverse_subquery(query)
+            lineages = []
+            filename = f"file_{i}"
+            destination =  list(query['main_query'].find_all(exp.Create))[0].this.this.this
+            # insert into try except goes here
+            for component in query.keys(): # for query component (sub/main queries) in query
+                target_columns =[]
+                # preprocess query and extract all useful information
+                ast = query[component]
+                space_table = find_table_w_spaces(ast) # list with tables with spaces (sqlglot cant parse them)
+                alias_table = get_tables(ast) # parse table name + table alias
+                tree = replace_aliases(query[component]) # remove table aliases
+                select_statement, target_columns = extract_target_columns(tree) # extract target columns
+                select_statement = [x.transform(transformer_functions) for x in select_statement] # remove column aliases
+                transformations = extract_transformation(select_statement)
+                target_columns = list(zip(target_columns, transformations)) 
+                query_node, target_node = get_next_nodes(query, component, destination)
+                lineages = extract_lineage(lineages, target_columns, query_node, target_node)
 
-
+                
         elif query['type'] == 'update_or_create_set':
-            lineages, destination = parse_update_or_create_set_lineages(query, query_node)
 
+            lineages = []
 
-        elif query['type'] == 'declare':
-            continue
-        
-        else:
-            continue
+            ast = replace_aliases(query['modified_SQL_query'])
+            ast = replace_alias_update_table(ast)
+
+            update = list(ast.find_all(exp.Update))[0]
+
+            destination_db =  str(list(ast.find_all(exp.Update))[0].this.db)
+            destination =  str(list(ast.find_all(exp.Update))[0].this.this)
+
+            tables = []
+
+            columns = list(update.expressions)
+
+            for column in list(update.expressions):     
+
+                target_col =str(list(column.this.find_all(exp.Column))[0]) if len(list(column.this.find_all(exp.Column))) == 1 else None 
+                source_col = str(list(column.expression.find_all(exp.Column))[0]) if len(list(column.expression.find_all(exp.Column))) == 1 else None
+                transformation = str(column.expression) if str(column.expression) != source_col else ""
+                value = str(list(column.expression.find_all(exp.Literal))[0]) if len(list(column.expression.find_all(exp.Literal))) == 1 else None
+
+                
+                if source_col != None:
+                    lineages.append({'SOURCE': f"{source_col}", 'TARGET': f"{query_node}.{source_col.split('.')[-1]}", 'TRANSFORMATION': ""})
+                    lineages.append({'SOURCE': f"{query_node}.{source_col.split('.')[-1]}", 'TARGET': f"{target_col}", 'TRANSFORMATION': transformation})
+                else:
+                    value = f"value: {value}"
+
+                    lineages.append({'SOURCE': f"{query_node}.{value}", 'TARGET': f"{target_col}", 'TRANSFORMATION': ""})
+
+                from_statement = list(update.find_all(exp.From))
+
+     
+
 
 
         lineages_df = create_lineages_df(lineages, nodes, filename, destination)
