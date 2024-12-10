@@ -1,0 +1,8 @@
+{
+    "modified_SQL_query": "CREATE VIEW CUSTOMER_BANK_DETAILS AS SELECT c.customer_id, c.first_name, c.last_name, c.email, a.account_id, a.balance, at.account_type_name, b.branch_name, b.branch_city, recent_transactions.total_transactions_amount, l.loan_id, l.loan_amount, l.interest_rate, TYPE_CONVERSION(total_interest_paid.total_interest) AS total_interest_paid FROM customers AS c JOIN accounts AS a ON EQ(c.customer_id, a.customer_id) JOIN account_types AS at ON EQ(a.account_type_id, at.account_type_id) JOIN branches AS b ON EQ(a.branch_id, b.branch_id) JOIN (subquery_1) AS recent_transactions ON EQ(a.account_id, recent_transactions.account_id) JOIN loans AS l ON EQ(c.customer_id, l.customer_id) JOIN (subquery_2) AS total_interest_paid ON EQ(l.loan_id, total_interest_paid.loan_id) WHERE COMPARE(c.join_date, DATEADD(year, -1, CURRENT_TIMESTAMP())) ORDER BY c.customer_id, a.account_id",
+    "subquery_dictionary": {
+        "subquery_1": "SELECT t.account_id, SUM(t.amount) AS total_transactions_amount FROM transactions AS t WHERE COMPARE(t.transaction_date, DATEADD(month, -1, CURRENT_TIMESTAMP())) GROUP BY t.account_id",
+        "subquery_2": "SELECT p.loan_id, SUM(MUL(p.payment_amount, (DIV(DIV(l.interest_rate, 100), 12)))) AS total_interest FROM payments AS p JOIN loans AS l ON EQ(p.loan_id, l.loan_id) WHERE COMPARE(l.end_date, CURRENT_TIMESTAMP()) GROUP BY p.loan_id, l.interest_rate"
+    },
+    "type": "update_or_create_select"
+}

@@ -1,0 +1,5 @@
+{
+    "modified_SQL_query": "WHILE 1=1 BEGIN DELETE TOP(100000) FROM dbo.REP_Master_GAP WHERE Entity = CASE WHEN 'TRG' ='BWF' THEN 'BPD' ELSE 'TRG' END AND Source ='QRM' AND Market_as_of_date = '3/31/2016' IF @@ROWCOUNT = 0 BREAK END GO",
+    "subquery_dictionary": "",
+    "type": "while_delete"
+}

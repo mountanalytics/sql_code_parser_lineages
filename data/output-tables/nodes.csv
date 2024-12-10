@@ -1,0 +1,68 @@
+,NAME_NODE,LABEL_NODE,FILTER,FUNCTION,ON,COLOR,ID
+0,subquery_5,file_0@subquery_5,orders.status = 'Completed',subquery,,#db59a5,0
+1,orders,orders,,DataSources,,#42d6a4,1
+2,subquery_4,file_0@subquery_4,,subquery,,#db59a5,2
+3,reviews,reviews,,DataSources,,#42d6a4,3
+4,subquery_3,file_0@subquery_3,,subquery,"['JOIN products AS p ON order_items.product_id = products.product_id', 'JOIN categories AS cat ON products.category_id = categories.category_id']",#db59a5,4
+5,order_items,order_items,,DataSources,,#42d6a4,5
+6,products,products,,DataSources,,#42d6a4,6
+7,subquery_2,file_0@subquery_2,,subquery,,#db59a5,7
+8,payments,payments,,DataSources,,#42d6a4,8
+9,subquery_1,file_0@subquery_1,"(orders.order_date >= DATEADD(month, -1, DATETIME_NOW()) AND (orders.status = 'Completed'))",subquery,,#db59a5,9
+10,query_CUSTOMER_ORDER,query_CUSTOMER_ORDER,"customers.signup_date <= DATEADD(CUSTOMER_ORDER.month, -1, DATETIME_NOW())",query,"['JOIN (subquery_1) AS recent_orders ON customers.customer_id = recent_orders.customer_id', 'JOIN (subquery_2) AS recent_payments ON recent_orders.order_id = recent_payments.order_id', 'JOIN (subquery_3) AS recent_order_items ON recent_orders.order_id = recent_order_items.order_id', 'JOIN (subquery_4) AS avg_product_rating ON recent_order_items.product_id = avg_product_rating.product_id', 'JOIN (subquery_5) AS total_customer_spend ON customers.customer_id = total_customer_spend.customer_id']",#db59a5,10
+11,CUSTOMER_ORDER,CUSTOMER_ORDER,,target,,#42d6a4,11
+12,customers,customers,,DataSources,,#42d6a4,12
+13,(subquery_1),file_0@(subquery_1),,subquery,"['JOIN (subquery_1) AS recent_orders ON customers.customer_id = recent_orders.customer_id', 'JOIN (subquery_2) AS recent_payments ON recent_orders.order_id = recent_payments.order_id', 'JOIN (subquery_3) AS recent_order_items ON recent_orders.order_id = recent_order_items.order_id', 'JOIN (subquery_4) AS avg_product_rating ON recent_order_items.product_id = avg_product_rating.product_id', 'JOIN (subquery_5) AS total_customer_spend ON customers.customer_id = total_customer_spend.customer_id']",#db59a5,13
+14,subquery_2,file_1@subquery_2,loans.end_date >= DATETIME_NOW(),subquery,['JOIN loans AS l ON payments.loan_id = loans.loan_id'],#db59a5,14
+15,loans,loans,,DataSources,,#42d6a4,15
+16,subquery_1,file_1@subquery_1,"transactions.transaction_date >= DATEADD(month, -1, DATETIME_NOW())",subquery,,#db59a5,16
+17,transactions,transactions,,DataSources,,#42d6a4,17
+18,query_CUSTOMER_BANK_DETAILS,query_CUSTOMER_BANK_DETAILS,"customers.join_date <= DATEADD(CUSTOMER_BANK_DETAILS.year, -1, DATETIME_NOW())",query,"['JOIN accounts AS a ON customers.customer_id = accounts.customer_id', 'JOIN account_types AS at ON accounts.account_type_id = account_types.account_type_id', 'JOIN branches AS b ON accounts.branch_id = branches.branch_id', 'JOIN (subquery_1) AS recent_transactions ON accounts.account_id = recent_transactions.account_id', 'JOIN loans AS l ON customers.customer_id = loans.customer_id', 'JOIN (subquery_2) AS total_interest_paid ON loans.loan_id = total_interest_paid.loan_id']",#db59a5,18
+19,CUSTOMER_BANK_DETAILS,CUSTOMER_BANK_DETAILS,,target,,#42d6a4,19
+20,accounts,accounts,,DataSources,,#42d6a4,20
+21,subquery_5,file_2@subquery_5,,subquery,,#db59a5,21
+22,market_data,market_data,,DataSources,,#42d6a4,22
+23,subquery_4,file_2@subquery_4,market_data.market_date = (subquery_5),subquery,['JOIN market_data AS md ON trades.stock_id = market_data.stock_id'],#db59a5,23
+24,trades,trades,,DataSources,,#42d6a4,24
+25,subquery_3,file_2@subquery_3,"market_data.market_date >= DATEADD(year, -1, DATETIME_NOW())",subquery,['JOIN market_data AS md ON trades.stock_id = market_data.stock_id'],#db59a5,25
+26,subquery_2,file_2@subquery_2,"dividends.dividend_date >= DATEADD(year, -1, DATETIME_NOW())",subquery,['JOIN dividends AS d ON trades.stock_id = dividends.stock_id'],#db59a5,26
+27,dividends,dividends,,DataSources,,#42d6a4,27
+28,subquery_1,file_2@subquery_1,"trades.trade_date >= DATEADD(month, -1, DATETIME_NOW())",subquery,['JOIN stocks AS s ON trades.stock_id = stocks.stock_id'],#db59a5,28
+29,stocks,stocks,,DataSources,,#42d6a4,29
+30,query_INVESTOR_OVERVIEW,query_INVESTOR_OVERVIEW,"investors.join_date <= DATEADD(INVESTOR_OVERVIEW.year, -1, DATETIME_NOW())",query,"['JOIN portfolios AS p ON investors.investor_id = portfolios.investor_id', 'JOIN (subquery_1) AS recent_trades ON portfolios.portfolio_id = recent_trades.portfolio_id', 'JOIN (subquery_2) AS dividends_received ON portfolios.portfolio_id = dividends_received.portfolio_id', 'JOIN (subquery_3) AS average_performance ON portfolios.portfolio_id = average_performance.portfolio_id', 'JOIN (subquery_4) AS total_investment ON portfolios.portfolio_id = total_investment.portfolio_id']",#db59a5,30
+31,INVESTOR_OVERVIEW,INVESTOR_OVERVIEW,,target,,#42d6a4,31
+32,investors,investors,,DataSources,,#42d6a4,32
+33,portfolios,portfolios,,DataSources,,#42d6a4,33
+34,subquery_3,file_3@subquery_3,,subquery,,#db59a5,34
+35,subscription_reviews,subscription_reviews,,DataSources,,#42d6a4,35
+36,subquery_2,file_3@subquery_2,"payments.payment_date >= DATEADD(month, -1, DATETIME_NOW())",subquery,,#db59a5,36
+37,subquery_1,file_3@subquery_1,,subquery,,#db59a5,37
+38,query_CUSTOMER_SUBSCRIPTION_DETAILS,query_CUSTOMER_SUBSCRIPTION_DETAILS,"customers.signup_date <= DATEADD(CUSTOMER_SUBSCRIPTION_DETAILS.month, -1, DATETIME_NOW())",query,"['JOIN subscriptions AS sub ON customers.customer_id = subscriptions.customer_id', 'JOIN (subquery_1) AS total_spend ON subscriptions.subscription_id = total_spend.subscription_id', 'JOIN (subquery_2) AS recent_payments ON subscriptions.subscription_id = recent_payments.subscription_id', 'JOIN subscription_plans AS sub_plan ON subscriptions.plan_id = subscription_plans.plan_id', 'JOIN (subquery_3) AS avg_review_rating ON subscriptions.subscription_id = avg_review_rating.subscription_id']",#db59a5,38
+39,CUSTOMER_SUBSCRIPTION_DETAILS,CUSTOMER_SUBSCRIPTION_DETAILS,,target,,#42d6a4,39
+40,subscriptions,subscriptions,,DataSources,,#42d6a4,40
+41,staging.FTP_Unpivot,staging.FTP_Unpivot,,DataSources,,#42d6a4,41
+42,query_5,query_5,"[""WHERE (Level_4 equals 'Fixed Rate Mortgages'"", ""and Forward_Starting equals 'FS'"", ""and Funding_space_Component is one of 'Basefundinginterest', 'Principal', 'Total Value'"", ""and NOT market_shock is one of 'Book Value', 'Face Amount', 'Net WAC', 'WAL_0')"", ""or (instrument_set equals 'Mortgage Proposal'"", ""and Funding_space_Component is one of 'Basefundinginterest', 'Principal', 'Total Value'"", ""and NOT market_shock is one of 'Book Value', 'Face Amount', 'Net WAC', 'WAL_0')"", ""and (Portfolio ends with 'OBV'"", ""or Portfolio ends with 'ABB')""]",query,[],#db59a5,42
+43,query_6,query_6,"[""WHERE (Level_4 equals 'Fixed Rate Mortgages'"", ""and instrumnet_set is one of 'mortgage', 'offset mortgage'"", ""and external_counterparty_segment equals 'households'"", ""and (market_shock ends with 'SOT'"", ""or market_shock ends with 'EVEatR'))"", ""or (Level_4 equals 'Fixed Rate Mortgage Savings'"", ""and instrument_set equals 'mortgage savings'"", ""and (market_shock ends with 'SOT'"", ""or market_shock ends with 'EVEatR'))"", ""and (Portfolio ends with 'OBV'"", ""or Portfolio ends with 'ABB')""]",query,[],#db59a5,43
+44,query_8,query_8,"DELETE WHERE (Level_4 equals 'Fixed Rate Mortgages' and instrumnet_set is one of 'mortgage', 'offset mortgage' and external_counterparty_segment equals 'households' and (market_shock ends with 'SOT' or market_shock ends with 'EVEatR')) or (Level_4 equals 'Fixed Rate Mortgage Savings' and instrument_set equals 'mortgage savings' and (market_shock ends with 'SOT' or market_shock ends with 'EVEatR')) and (Portfolio ends with 'OBV' or Portfolio ends with 'ABB')",query,[],#db59a5,44
+45,query_10,query_10,"DELETE WHERE (Level_4 equals 'Fixed Rate Mortgages' and instrumnet_set is one of 'mortgage', 'offset mortgage' and external_counterparty_segment equals 'households' and (market_shock ends with 'SOT' or market_shock ends with 'EVEatR')) or (Level_4 equals 'Fixed Rate Mortgage Savings' and instrument_set equals 'mortgage savings' and (market_shock ends with 'SOT' or market_shock ends with 'EVEatR')) and (Portfolio ends with 'OBV' or Portfolio ends with 'ABB')",query,[],#db59a5,45
+46,@PortfolioCurrent,@PortfolioCurrent,,variable,,#d0d3d3,46
+47,@Market,@Market,,variable,,#d0d3d3,47
+48,@LikeMatchGap,@LikeMatchGap,,variable,,#d0d3d3,48
+49,@CompanyName,@CompanyName,,variable,,#d0d3d3,49
+50,@Entity,@Entity,,variable,,#d0d3d3,50
+51,@DataSetEmpty,@DataSetEmpty,,variable,,#d0d3d3,51
+52,@DataSetEmpty,@DataSetEmpty,"IF NOT EXISTS ( SELECT 1 FROM exp.MDSStoBETValuationResult WHERE Entity = @Entity and CONVERT(date, PortfolioAsOfDate) = CONVERT(date, @PortfolioCurrent) ) SET @DataSetEmpty = 1",query,,#db59a5,52
+53,staging.FTP_Base,staging.FTP_Base,,DataSources,[],#db59a5,53
+54,query_21,query_21,truncate table staging.FTP_Base,query,,#db59a5,54
+55,staging.FTP_Shocks,staging.FTP_Shocks,,DataSources,[],#db59a5,55
+56,query_22,query_22,truncate table staging.FTP_Shocks,query,,#db59a5,56
+57,query_23,query_23,truncate table staging.FTP_Unpivot,query,,#db59a5,57
+58,@Product,@Product,,variable,,#d0d3d3,58
+59,@Period,@Period,,variable,,#d0d3d3,59
+60,@FileID,@FileID,,variable,,#d0d3d3,60
+61,cfg.LKP_Counterparty,cfg.LKP_Counterparty,,DataSources,,#42d6a4,61
+62,.staging.GAP,.staging.GAP,,DataSources,,#42d6a4,62
+63,staging.GAP,staging.GAP,,DataSources,,#42d6a4,63
+64,query_35,query_35,,query,"['LEFT JOIN cfg.LKP_Counterparty AS cp ON cp.Intercompany_Legal_Entity = staging.GAP.Intercompany_Legal_Entity', 'AND cp.Intercompany_Counterparty = staging.GAP.Intercompany_Counterparty']",#db59a5,64
+65,staging.GAP_DCF_Intermediate,staging.GAP_DCF_Intermediate,,DataSources,,#42d6a4,65
+66,query_36,query_36,"[""WHERE ((Level_04 equals 'Fixed Rate Mortgages'"", ""and Forward_Starting equals 'FS'"", ""and Funding_Component_Mapping_ID is one of 'Base funding interest', 'Principal', 'Total Value')"", ""or (instrument_set equals 'Mortgage Proposal'"", ""and Funding_Component_Mapping_ID is one of 'Base funding interest', 'Principal', 'Total Value'))"", ""and (Entity is one of 'OBV', 'ABB')""]",query,[],#db59a5,66

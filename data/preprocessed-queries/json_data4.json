@@ -1,0 +1,5 @@
+{
+    "modified_SQL_query": "UPDATE staging.FTP_Unpivot SET EQ(Dirty_space_Price, 0) WHERE AND(OR((AND(AND(AND(EQ(Level_4, 'Fixed Rate Mortgages'), EQ(Forward_Starting, 'FS')), COMPARE(Funding_space_Component, ('Basefundinginterest', 'Principal', 'Total Value'))), NOT COMPARE(market_shock, ('Book Value', 'Face Amount', 'Net WAC', 'WAL_0')))), (AND(AND(EQ(instrument_set, 'Mortgage Proposal'), COMPARE(Funding_space_Component, ('Basefundinginterest', 'Principal', 'Total Value'))), NOT COMPARE(market_shock, ('Book Value', 'Face Amount', 'Net WAC', 'WAL_0'))))), (OR(COMPARE(Portfolio, '%OBV'), COMPARE(Portfolio, '%ABB'))))",
+    "subquery_dictionary": {},
+    "type": "update_or_create_set"
+}

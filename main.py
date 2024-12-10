@@ -30,17 +30,17 @@ def sql_to_lineages():
     main('data/output-tables/lineages/', 'data/output-tables/nodes.csv')
 
 
-def sql_to_lineages(query, nodes, lineages, variable_tables, node_name):
-    """
-    Orchestrator
-    """
-
-    preprocessed_queries = preprocess_queries_ssis(query) # 'data/queries-txts/WorldWideImporters 1.txt'
-
-    nodes += extract_nodes(preprocessed_queries)
-    lineages += extract_lineages(preprocessed_queries, nodes)
-
-    return nodes, lineages, variable_tables
+#def sql_to_lineages(query, nodes, lineages, variable_tables, node_name):
+#    """
+#    Orchestrator
+#    """
+#
+#    preprocessed_queries = preprocess_queries_ssis(query) # 'data/queries-txts/WorldWideImporters 1.txt'
+#
+#    nodes += extract_nodes(preprocessed_queries)
+#    lineages += extract_lineages(preprocessed_queries, nodes)
+#
+#    return nodes, lineages, variable_tables
 
 if __name__ == '__main__':
     sql_to_lineages()   
