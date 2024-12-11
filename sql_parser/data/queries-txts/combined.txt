@@ -1,0 +1,530 @@
+CREATE VIEW CUSTOMER_ORDER AS 
+SELECT
+    c.customer_id,
+    c.first_name,
+    c.last_name,
+    c.email,
+    recent_orders.order_id,
+    recent_orders.order_date,
+    recent_orders.total_order_amount,
+    recent_payments.total_payment_amount,
+    recent_order_items.product_name,
+    recent_order_items.category_name,
+    recent_order_items.quantity,
+    recent_order_items.unit_price,
+    recent_order_items.total_item_amount,
+    CAST(avg_product_rating.avg_rating AS DECIMAL(3,2)) AS avg_product_rating,
+    CAST(total_customer_spend.total_spent AS DECIMAL(10,2)) AS total_customer_spent
+FROM
+    customers c
+JOIN (
+    SELECT
+        o.order_id,
+        o.customer_id,
+        o.order_date,
+        o.total_amount AS total_order_amount
+    FROM
+        orders o
+    WHERE
+        (o.order_date >= DATEADD(month, -1, GETDATE())
+        AND (o.status = 'Completed'))
+) recent_orders ON c.customer_id = recent_orders.customer_id
+JOIN (
+    SELECT
+        p.order_id,
+        SUM(p.payment_amount) AS total_payment_amount
+    FROM
+        payments p
+    GROUP BY
+        p.order_id
+) recent_payments ON recent_orders.order_id = recent_payments.order_id
+JOIN (
+    SELECT
+        oi.order_id,
+        p.product_name,
+        cat.category_name,
+        oi.quantity,
+        oi.unit_price,
+        (oi.quantity * oi.unit_price) AS total_item_amount
+    FROM
+        order_items oi
+    JOIN products p ON oi.product_id = p.product_id
+    JOIN categories cat ON p.category_id = cat.category_id
+) recent_order_items ON recent_orders.order_id = recent_order_items.order_id
+JOIN (
+    SELECT
+        r.product_id,
+        AVG(r.rating) AS avg_rating
+    FROM
+        reviews r
+    GROUP BY
+        r.product_id
+) avg_product_rating ON recent_order_items.product_id = avg_product_rating.product_id
+JOIN (
+    SELECT
+        o.customer_id,
+        SUM(o.total_amount) AS total_spent
+    FROM
+        orders o
+    WHERE
+        o.status = 'Completed'
+    GROUP BY
+        o.customer_id
+) total_customer_spend ON c.customer_id = total_customer_spend.customer_id
+WHERE
+    c.signup_date <= DATEADD(month, -1, GETDATE())
+ORDER BY
+    c.customer_id,
+    recent_orders.order_date;
+	
+	
+	
+CREATE VIEW CUSTOMER_BANK_DETAILS AS
+SELECT
+    c.customer_id,
+    c.first_name,
+    c.last_name,
+    c.email,
+    a.account_id,
+    a.balance,
+    at.account_type_name,
+    b.branch_name,
+    b.branch_city,
+    recent_transactions.total_transactions_amount,
+    l.loan_id,
+    l.loan_amount,
+    l.interest_rate,
+    CAST(total_interest_paid.total_interest AS DECIMAL(10,2)) AS total_interest_paid
+FROM
+    customers c
+JOIN accounts a ON c.customer_id = a.customer_id
+JOIN account_types at ON a.account_type_id = at.account_type_id
+JOIN branches b ON a.branch_id = b.branch_id
+JOIN (
+    SELECT
+        t.account_id,
+        SUM(t.amount) AS total_transactions_amount
+    FROM
+        transactions t
+    WHERE
+        t.transaction_date >= DATEADD(month, -1, GETDATE())
+    GROUP BY
+        t.account_id
+) recent_transactions ON a.account_id = recent_transactions.account_id
+JOIN loans l ON c.customer_id = l.customer_id
+JOIN (
+    SELECT
+        p.loan_id,
+        SUM(p.payment_amount * (l.interest_rate / 100 / 12)) AS total_interest
+    FROM
+        payments p
+    JOIN loans l ON p.loan_id = l.loan_id
+    WHERE
+        l.end_date >= GETDATE()
+    GROUP BY
+        p.loan_id, l.interest_rate
+) total_interest_paid ON l.loan_id = total_interest_paid.loan_id
+WHERE
+    c.join_date <= DATEADD(year, -1, GETDATE())
+ORDER BY
+    c.customer_id,
+    a.account_id;
+
+
+CREATE VIEW INVESTOR_OVERVIEW AS
+SELECT
+    i.investor_id,
+    i.first_name,
+    i.last_name,
+    i.email,
+    p.portfolio_id,
+    p.portfolio_name,
+    recent_trades.trade_id,
+    recent_trades.trade_date,
+    recent_trades.ticker,
+    recent_trades.company_name,
+    recent_trades.trade_type,
+    recent_trades.quantity,
+    recent_trades.price_per_share,
+    recent_trades.total_trade_value,
+    CAST(dividends_received.total_dividends AS DECIMAL(10,2)) AS total_dividends,
+    CAST(average_performance.avg_performance AS DECIMAL(10,2)) AS average_performance,
+    CAST(total_investment.total_value AS DECIMAL(10,2)) AS total_investment_value
+FROM
+    investors i
+JOIN portfolios p ON i.investor_id = p.investor_id
+JOIN (
+    SELECT
+        t.trade_id,
+        t.portfolio_id,
+        s.ticker,
+        s.company_name,
+        t.trade_date,
+        t.trade_type,
+        t.quantity,
+        t.price_per_share,
+        (t.quantity * t.price_per_share) AS total_trade_value
+    FROM
+        trades t
+    JOIN stocks s ON t.stock_id = s.stock_id
+    WHERE
+        t.trade_date >= DATEADD(month, -1, GETDATE())
+) recent_trades ON p.portfolio_id = recent_trades.portfolio_id
+JOIN (
+    SELECT
+        t.portfolio_id,
+        SUM(d.dividend_amount * t.quantity) AS total_dividends
+    FROM
+        trades t
+    JOIN dividends d ON t.stock_id = d.stock_id
+    WHERE
+        d.dividend_date >= DATEADD(year, -1, GETDATE())
+    GROUP BY
+        t.portfolio_id
+) dividends_received ON p.portfolio_id = dividends_received.portfolio_id
+JOIN (
+    SELECT
+        t.portfolio_id,
+        AVG(md.closing_price) AS avg_performance
+    FROM
+        trades t
+    JOIN market_data md ON t.stock_id = md.stock_id
+    WHERE
+        md.market_date >= DATEADD(year, -1, GETDATE())
+    GROUP BY
+        t.portfolio_id
+) average_performance ON p.portfolio_id = average_performance.portfolio_id
+JOIN (
+    SELECT
+        t.portfolio_id,
+        SUM(t.quantity * md.closing_price) AS total_value
+    FROM
+        trades t
+    JOIN market_data md ON t.stock_id = md.stock_id
+    WHERE
+        md.market_date = (SELECT MAX(market_date) FROM market_data)
+    GROUP BY
+        t.portfolio_id
+) total_investment ON p.portfolio_id = total_investment.portfolio_id
+WHERE
+    i.join_date <= DATEADD(year, -1, GETDATE())
+ORDER BY
+    i.investor_id,
+    p.portfolio_id;
+	
+	
+
+CREATE VIEW CUSTOMER_SUBSCRIPTION_DETAILS AS
+SELECT
+    c.customer_id,
+    c.first_name,
+    c.last_name,
+    c.email,
+    sub.subscription_id,
+    sub.subscription_date,
+    sub.plan_name,
+    sub.plan_cost,
+    sub.plan_duration,
+    CAST(total_spend.total_spent AS DECIMAL(10,2)) AS total_spent,
+    recent_payments.payment_date,
+    recent_payments.payment_amount,
+    sub_plan.plan_features,
+    CAST(avg_review_rating.avg_rating AS DECIMAL(3,2)) AS avg_review_rating
+FROM
+    customers c
+JOIN subscriptions sub ON c.customer_id = sub.customer_id
+JOIN (
+    SELECT
+        p.subscription_id,
+        SUM(p.payment_amount) AS total_spent
+    FROM
+        payments p
+    GROUP BY
+        p.subscription_id
+) total_spend ON sub.subscription_id = total_spend.subscription_id
+JOIN (
+    SELECT
+        p.subscription_id,
+        p.payment_date,
+        p.payment_amount
+    FROM
+        payments p
+    WHERE
+        p.payment_date >= DATEADD(month, -1, GETDATE())
+) recent_payments ON sub.subscription_id = recent_payments.subscription_id
+JOIN subscription_plans sub_plan ON sub.plan_id = sub_plan.plan_id
+JOIN (
+    SELECT
+        r.subscription_id,
+        AVG(r.rating) AS avg_rating
+    FROM
+        subscription_reviews r
+    GROUP BY
+        r.subscription_id
+) avg_review_rating ON sub.subscription_id = avg_review_rating.subscription_id
+WHERE
+    c.signup_date <= DATEADD(month, -1, GETDATE())
+ORDER BY
+    c.customer_id,
+    sub.subscription_date;
+
+
+
+
+Update [staging].[FTP_Unpivot]
+set [Dirty Price] = 0
+where
+(
+	Level_4 = 'Fixed Rate Mortgages'
+	and Forward_Starting = 'FS'
+	and [Funding Component] in ('Basefundinginterest', 'Principal', 'Total Value')
+	and market_shock not in ('Book Value', 'Face Amount', 'Net WAC', 'WAL_0')
+)
+or
+(
+	instrument_set = 'Mortgage Proposal'
+	and [Funding Component] in ('Basefundinginterest', 'Principal', 'Total Value')
+	and market_shock not in ('Book Value', 'Face Amount', 'Net WAC', 'WAL_0')
+)
+And
+(
+	Portfolio like '%OBV' or Portfolio like '%ABB'
+);
+
+
+UPDATE [staging].[FTP_Unpivot]
+SET [Dirty Price] = 0
+WHERE
+(
+		Level_4 = 'Fixed Rate Mortgages'
+		AND instrumnet_set IN (
+			'mortgage'
+			,'offset mortgage'
+			)
+		AND external_counterparty_segment = 'households'
+		AND (
+			market_shock LIKE '%SOT'
+			OR market_shock LIKE '%EVEatR'
+			)
+		)
+
+	OR (
+		Level_4 = 'Fixed Rate Mortgage Savings'
+		AND instrument_set = 'mortgage savings'
+		AND (
+			market_shock LIKE '%SOT'
+			OR market_shock LIKE '%EVEatR'
+			)
+		)
+	AND (
+		Portfolio LIKE '%OBV'
+		OR Portfolio LIKE '%ABB'
+		);
+
+
+SELECT COUNT(*)
+FROM [dbo].[REP_Discount_Factors]
+WHERE [Market] = '12/31/2021';
+WHILE 1=1
+	BEGIN
+		DELETE TOP(100000)
+		FROM [dbo].[REP_Discount_Factors]
+		WHERE [Market] = '12/31/2021' IF @@ROWCOUNT = 0 BREAK
+	END
+GO;
+
+
+SELECT COUNT(*)
+FROM [dbo].[REP_Master_GAP]
+WHERE Entity = CASE WHEN 'TRG' ='BWF' THEN 'BPD' ELSE 'TRG' END AND Source ='QRM'  AND Market_as_of_date = '3/31/2016';
+WHILE 1=1
+	BEGIN
+		DELETE TOP(100000)
+		FROM [dbo].[REP_Master_GAP]
+		WHERE Entity = CASE WHEN 'TRG' ='BWF' THEN 'BPD' ELSE 'TRG' END AND Source ='QRM'  AND Market_as_of_date = '3/31/2016' IF @@ROWCOUNT = 0 BREAK
+	END
+GO;
+
+
+DECLARE @PortfolioCurrent varchar(255)	=	?;
+DECLARE @Market date			=	?;
+DECLARE @LikeMatchGap varchar(255)	=	?;
+DECLARE @CompanyName varchar(255)	=	?;
+
+SELECT convert(INT,forecastid) as forcastid FROM QRM.Run_Time_Description WHERE
+ 1=1
+ AND Portfolio = @PortfolioCurrent
+ AND Convert(Date,Market) = Convert(Date,@Market)
+ AND Strategy like @LikeMatchGap
+ AND CompanyName = @CompanyName
+ AND DateTimeStamp = (select max(DateTimeStamp) FROM [QRM].[Run_Time_Description] where CompanyName = @CompanyName AND Portfolio = @PortfolioCurrent);
+
+DECLARE @PortfolioCurrent varchar(255)	=	'5/31/2024';
+DECLARE @Entity varchar(10)	=	'OBV';
+DECLARE @DataSetEmpty bit = 0;
+
+IF NOT EXISTS (
+	SELECT 1
+	FROM exp.MDSStoBETValuationResult
+	WHERE Entity = @Entity
+	and CONVERT(date, PortfolioAsOfDate) = CONVERT(date, @PortfolioCurrent)
+)
+SET @DataSetEmpty = 1;
+
+
+
+
+Select		FBA_CNT+
+		FSH_CNT+
+		FUP_CNT As RecordCount from
+
+
+(Select count(*) as FBA_CNT from [staging].[FTP_Base])FBA join
+(Select count(*) as FSH_CNT from [staging].[FTP_Shocks])FSH on 1=1 join
+(Select count(*) as FUP_CNT from [staging].[FTP_Unpivot])FUP on 1=1;
+
+
+truncate table [staging].[FTP_Base];
+truncate table [staging].[FTP_Shocks];
+truncate table [staging].[FTP_Unpivot];
+
+
+DROP TABLE IF EXISTS [dbo].[FTP_Base_Assumption_Staging];
+
+
+
+DECLARE @Product AS CHAR(3)	= ?;
+DECLARE @Period AS VARCHAR(6)	= ?;
+DECLARE @FileID AS SMALLINT	= ?;
+
+SELECT
+			PF.Import_Table
+,			PF.Input_Location
+,			PF.Import_error_table
+,			PF.Mastertable_Tabel_Field
+,			PF.Imported_Location
+,			PF.Mail_Group
+,			FS.[File_Name]
+,			PP1.Parameter_Value
+,			PP2.Parameter_Value AS Reporting_Database
+,			PP3.Parameter_Value AS Reporting_Server
+FROM		dbo.tbl_Product PR
+INNER JOIN	dbo.tbl_Product_file PF
+ON			PR.Product_id = PF.Product_id
+AND			PR.Period = PF.Period
+LEFT JOIN	dbo.tbl_File_State FS
+ON			PF.Product_id = FS.Product_id
+AND			PF.Period = FS.Period
+AND			PF.[File_id] = FS.[File_id]
+INNER JOIN	dbo.tbl_Product_parameter PP1
+ON			PF.Product_id = PP1.Product_id		
+AND			PF.Period = PP1.Period
+INNER JOIN	dbo.tbl_Product_parameter PP2
+ON			PP2.Product_id = 'GEN' AND PF.Period = PP2.Period
+INNER JOIN	dbo.tbl_Product_parameter PP3
+ON			PP3.Product_id = 'GEN' AND PF.Period = PP3.Period
+AND			PF.Period = PP1.Period
+WHERE		PP1.Action_Take = 'Portdate'
+AND			PP2.Action_Take = 'ReportingDatabase'
+AND			PP3.Action_Take = 'ReportingServer'
+AND			PR.Product_id = @Product
+AND			PR.Period = @Period
+AND			PF.[File_id] = @FileID;
+
+
+
+
+Select PLN.PLN_CNT+RTD.RTD_CNT+ACD.ACD_CNT+FOP.FOP_CNT+GAP.GAP_CNT from
+(Select count(*) as PLN_CNT from [staging].[PlanningDimentsions])PLN join
+(Select count(*) as RTD_CNT from [staging].[Run_Time_Description])RTD on 1=1 join
+(Select count(*) as ACD_CNT from [staging].[Account_Dimension])ACD on 1=1 join
+(Select count(*) as FOP_CNT from [staging].[Forecast_Periods])FOP on 1=1 join
+(Select count(*) as GAP_CNT from [staging].[GAP])GAP on 1=1 ;
+
+truncate table [staging].[PlanningDimentsions];
+truncate table [staging].[Run_Time_Description];
+truncate table [staging].[Account_Dimension];
+truncate table [staging].[Forecast_Periods];
+truncate table [staging].[GAP];
+
+
+
+
+
+Update gap
+set
+ gap.[Intercompany_segment] = ISNULL(cp.[Intercompany_segment], 'LKP_error')
+FROM [staging].[GAP] gap
+Left Join [cfg].[LKP_Counterparty] cp
+on
+ cp.[Intercompany_Legal_Entity] = gap.Intercompany_Legal_Entity
+ and cp.[Intercompany_Counterparty] = gap.[Intercompany_Counterparty];
+
+
+
+
+Update staging.GAP_DCF_Intermediate
+set [ValueResult]=0, [ValueCorrected]=0
+where
+((
+	Level_04 = 'Fixed Rate Mortgages'
+	and Forward_Starting = 'FS'
+	and [Funding_Component_Mapping_ID] in ('Base funding interest', 'Principal', 'Total Value')
+)
+or
+(
+	instrument_set = 'Mortgage Proposal'
+	and [Funding_Component_Mapping_ID] in ('Base funding interest', 'Principal', 'Total Value')
+))
+And
+(
+	Entity in ('OBV','ABB')
+);
+
+
+DECLARE @Product AS CHAR(3)	= ?;
+DECLARE @Period AS VARCHAR(6)	= ?;
+DECLARE @FileID AS INT		= ?;
+
+SELECT
+			PF.Import_Table
+,			PF.Input_Location
+,			PF.Import_error_table
+,			PF.Mastertable_Tabel_Field
+,			PF.Imported_Location
+,			ISNULL(PF.Mail_Group, '') Mail_Group
+,			FS.[File_Name]
+,			PP1.Parameter_Value
+,			PP2.Parameter_Value AS Reporting_Database
+,			PP3.Parameter_Value AS Reporting_Server
+FROM		dbo.tbl_Product PR
+INNER JOIN	dbo.tbl_Product_file PF
+ON			PR.Product_id = PF.Product_id
+AND			PR.Period = PF.Period
+LEFT JOIN	dbo.tbl_File_State FS
+ON			PF.Product_id = FS.Product_id
+AND			PF.Period = FS.Period
+AND			PF.[File_id] = FS.[File_id]
+INNER JOIN	dbo.tbl_Product_parameter PP1
+ON			PF.Product_id = PP1.Product_id		
+AND			PF.Period = PP1.Period
+INNER JOIN	dbo.tbl_Product_parameter PP2
+ON			PP2.Product_id = 'GEN' AND PF.Period = PP2.Period
+INNER JOIN	dbo.tbl_Product_parameter PP3
+ON			PP3.Product_id = 'GEN' AND PF.Period = PP3.Period
+WHERE		PP1.Action_Take = 'Portdate'
+AND			PR.Product_id = @Product
+AND			PR.Period = @Period
+AND			PF.[File_id] = @FileID
+AND			PP2.Action_Take = 'ReportingDatabase'
+AND			PP3.Action_Take = 'ReportingServer';
+
+
+
+
+
+
+
+
+
+

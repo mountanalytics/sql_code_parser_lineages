@@ -1,0 +1,5 @@
+{
+    "modified_SQL_query": "SELECT COUNT(*) FROM dbo.REP_Discount_Factors WHERE EQ(Market, '12/31/2021')",
+    "subquery_dictionary": {},
+    "type": "select"
+}

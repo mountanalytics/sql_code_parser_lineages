@@ -1,0 +1,5 @@
+{
+    "modified_SQL_query": "truncate table staging.FTP_Shocks",
+    "subquery_dictionary": "",
+    "type": "truncate"
+}

@@ -1,0 +1,9 @@
+{
+    "modified_SQL_query": "SELECT ADD(ADD(FBA_CNT, FSH_CNT), FUP_CNT) AS RecordCount FROM (subquery_1) AS FBA JOIN (subquery_2) AS FSH ON EQ(1, 1) JOIN (subquery_3) AS FUP ON EQ(1, 1)",
+    "subquery_dictionary": {
+        "subquery_1": "SELECT COUNT(*) AS FBA_CNT FROM staging.FTP_Base",
+        "subquery_2": "SELECT COUNT(*) AS FSH_CNT FROM staging.FTP_Shocks",
+        "subquery_3": "SELECT COUNT(*) AS FUP_CNT FROM staging.FTP_Unpivot"
+    },
+    "type": "select"
+}

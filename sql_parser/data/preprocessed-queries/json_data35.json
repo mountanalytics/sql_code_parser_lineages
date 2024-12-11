@@ -1,0 +1,5 @@
+{
+    "modified_SQL_query": "UPDATE staging.GAP_DCF_Intermediate SET EQ(ValueResult, 0), EQ(ValueCorrected, 0) WHERE AND((OR((AND(AND(EQ(Level_04, 'Fixed Rate Mortgages'), EQ(Forward_Starting, 'FS')), COMPARE(Funding_Component_Mapping_ID, ('Base funding interest', 'Principal', 'Total Value')))), (AND(EQ(instrument_set, 'Mortgage Proposal'), COMPARE(Funding_Component_Mapping_ID, ('Base funding interest', 'Principal', 'Total Value')))))), (COMPARE(Entity, ('OBV', 'ABB'))))",
+    "subquery_dictionary": {},
+    "type": "update_or_create_set"
+}

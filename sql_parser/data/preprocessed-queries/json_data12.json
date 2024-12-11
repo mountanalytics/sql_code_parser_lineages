@@ -1,0 +1,5 @@
+{
+    "modified_SQL_query": "DECLARE @LikeMatchGap varchar(255) = ?",
+    "subquery_dictionary": "",
+    "type": "declare"
+}

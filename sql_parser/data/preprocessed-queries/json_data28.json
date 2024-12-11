@@ -1,0 +1,11 @@
+{
+    "modified_SQL_query": "SELECT ADD(ADD(ADD(ADD(PLN.PLN_CNT, RTD.RTD_CNT), ACD.ACD_CNT), FOP.FOP_CNT), GAP.GAP_CNT) FROM (subquery_1) AS PLN JOIN (subquery_2) AS RTD ON EQ(1, 1) JOIN (subquery_3) AS ACD ON EQ(1, 1) JOIN (subquery_4) AS FOP ON EQ(1, 1) JOIN (subquery_5) AS GAP ON EQ(1, 1)",
+    "subquery_dictionary": {
+        "subquery_1": "SELECT COUNT(*) AS PLN_CNT FROM staging.PlanningDimentsions",
+        "subquery_2": "SELECT COUNT(*) AS RTD_CNT FROM staging.Run_Time_Description",
+        "subquery_3": "SELECT COUNT(*) AS ACD_CNT FROM staging.Account_Dimension",
+        "subquery_4": "SELECT COUNT(*) AS FOP_CNT FROM staging.Forecast_Periods",
+        "subquery_5": "SELECT COUNT(*) AS GAP_CNT FROM staging.GAP"
+    },
+    "type": "select"
+}
