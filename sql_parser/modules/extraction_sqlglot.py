@@ -263,7 +263,7 @@ def preprocess_queries(dir:str) -> dict:
 
     for i, query in enumerate(sql_queries):
         query = query.replace("GETDATE()", "CURRENT_TIMESTAMP")
-  
+        print(query)
 
         if 'declare' not in query.lower() and 'if not exists' not in query.lower() and ('select' in query.lower() or 'set' in query.lower()):
             # parse
@@ -346,7 +346,7 @@ def preprocess_queries_ssis(queries:str, result_set :str) -> dict:
     Orchestrates the preprocessing and extraction of the SQL queries
     """
     preprocessed_queries = []
-
+    declare_dict = {}
     
 
     for i, query in enumerate(queries.split(';')):
@@ -363,7 +363,14 @@ def preprocess_queries_ssis(queries:str, result_set :str) -> dict:
             if result_set != None:
                 query = f"INSERT INTO {result_set.replace('::', '_doubecolumns_')} \n" + query
             ast = parse_one(replace_spaces_in_brackets(query).replace('[', '').replace(']', ''))
+            def transformer_vars(node):
+                    for var in list(ast.find_all(exp.Var)):
+                        if isinstance(node, exp.Var) and node.this == f"{var}":
+                            ret_value = "@" + declare_dict[f"@{var.this}"].replace('::', '_doubecolumns_').replace("'", '')
+                            return parse_one(ret_value)
+                    return node
 
+            ast = ast.transform(transformer_vars)
 
             #ast = replace_aliases(ast)
 
@@ -412,6 +419,9 @@ def preprocess_queries_ssis(queries:str, result_set :str) -> dict:
         elif 'declare' in query.lower():
             preprocessed_query_json = {'modified_SQL_query': query, 'subquery_dictionary': '', 'type': 'declare'}
             #save_preprocessed_query(preprocessed_query_json, i)
+            variable = re.findall(r'@\w+', query)[0]
+            var_ssis = query.split("=")[1].strip()
+            declare_dict[variable] = var_ssis
             preprocessed_query = {'modified_SQL_query': query, 'subquery_dictionary': '', 'type': 'declare'}
             preprocessed_queries.append(preprocessed_query)
 
