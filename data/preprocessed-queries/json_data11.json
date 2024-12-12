@@ -1,5 +1,0 @@
-{
-    "modified_SQL_query": "DECLARE @Market date = ?",
-    "subquery_dictionary": "",
-    "type": "declare"
-}

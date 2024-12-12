@@ -1,5 +1,0 @@
-{
-    "modified_SQL_query": "truncate table staging.PlanningDimentsions",
-    "subquery_dictionary": "",
-    "type": "truncate"
-}

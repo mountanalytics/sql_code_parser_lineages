@@ -1,5 +1,0 @@
-{
-    "modified_SQL_query": "SELECT PF.Import_Table, PF.Input_Location, PF.Import_error_table, PF.Mastertable_Tabel_Field, PF.Imported_Location, PF.Mail_Group, FS.File_Name, PP1.Parameter_Value, PP2.Parameter_Value AS Reporting_Database, PP3.Parameter_Value AS Reporting_Server FROM dbo.tbl_Product AS PR INNER JOIN dbo.tbl_Product_file AS PF ON AND(EQ(PR.Product_id, PF.Product_id), EQ(PR.Period, PF.Period)) LEFT JOIN dbo.tbl_File_State AS FS ON AND(AND(EQ(PF.Product_id, FS.Product_id), EQ(PF.Period, FS.Period)), EQ(PF.File_id, FS.File_id)) INNER JOIN dbo.tbl_Product_parameter AS PP1 ON AND(EQ(PF.Product_id, PP1.Product_id), EQ(PF.Period, PP1.Period)) INNER JOIN dbo.tbl_Product_parameter AS PP2 ON AND(EQ(PP2.Product_id, 'GEN'), EQ(PF.Period, PP2.Period)) INNER JOIN dbo.tbl_Product_parameter AS PP3 ON AND(AND(EQ(PP3.Product_id, 'GEN'), EQ(PF.Period, PP3.Period)), EQ(PF.Period, PP1.Period)) WHERE AND(AND(AND(AND(AND(EQ(PP1.Action_Take, 'Portdate'), EQ(PP2.Action_Take, 'ReportingDatabase')), EQ(PP3.Action_Take, 'ReportingServer')), EQ(PR.Product_id, @Product)), EQ(PR.Period, @Period)), EQ(PF.File_id, @FileID))",
-    "subquery_dictionary": {},
-    "type": "select"
-}

@@ -1,5 +1,0 @@
-{
-    "modified_SQL_query": "UPDATE gap SET EQ(gap.Intercompany_segment, ISNULL(cp.Intercompany_segment, 'LKP_error')) FROM staging.GAP AS gap LEFT JOIN cfg.LKP_Counterparty AS cp ON AND(EQ(cp.Intercompany_Legal_Entity, gap.Intercompany_Legal_Entity), EQ(cp.Intercompany_Counterparty, gap.Intercompany_Counterparty))",
-    "subquery_dictionary": {},
-    "type": "update_or_create_set"
-}

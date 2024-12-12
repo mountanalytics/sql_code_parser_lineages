@@ -1,3 +1,0 @@
-,SOURCE,TARGET,TRANSFORMATION,FILE_NAME,ROW_ID,LINK_VALUE,SOURCE_NODE,TARGET_NODE,SOURCE_FIELD,TARGET_FIELD,COLOR
-0,cfg.LKP_Counterparty.Intercompany_segment,query_35.Intercompany_segment,,file_3,0,1,61,64,Intercompany_segment,Intercompany_segment,aliceblue
-1,query_35.Intercompany_segment,staging.GAP.Intercompany_segment,"ISNULL(cfg.LKP_Counterparty.Intercompany_segment, 'LKP_error')",file_3,0,1,64,63,Intercompany_segment,Intercompany_segment,orangered

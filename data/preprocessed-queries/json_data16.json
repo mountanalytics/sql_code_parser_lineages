@@ -1,5 +1,0 @@
-{
-    "modified_SQL_query": "DECLARE @Entity varchar(10) = 'OBV'",
-    "subquery_dictionary": "",
-    "type": "declare"
-}

@@ -1,5 +1,0 @@
-{
-    "modified_SQL_query": "DECLARE @Product AS CHAR(3) = ?",
-    "subquery_dictionary": "",
-    "type": "declare"
-}

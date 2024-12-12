@@ -1,5 +1,0 @@
-{
-    "modified_SQL_query": "truncate table staging.Forecast_Periods",
-    "subquery_dictionary": "",
-    "type": "truncate"
-}

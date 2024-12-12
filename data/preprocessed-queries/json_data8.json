@@ -1,5 +1,0 @@
-{
-    "modified_SQL_query": "SELECT COUNT(*) FROM dbo.REP_Master_GAP WHERE AND(AND(EQ(Entity, IFTHENELSE(EQ('TRG', 'BWF'),'BPD', 'TRG')), EQ(Source, 'QRM')), EQ(Market_as_of_date, '3/31/2016'))",
-    "subquery_dictionary": {},
-    "type": "select"
-}

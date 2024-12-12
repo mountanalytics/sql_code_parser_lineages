@@ -1,0 +1,13 @@
+README.md
+setup.py
+sql_parser/__init__.py
+sql_parser/main.py
+sql_parser.egg-info/PKG-INFO
+sql_parser.egg-info/SOURCES.txt
+sql_parser.egg-info/dependency_links.txt
+sql_parser.egg-info/entry_points.txt
+sql_parser.egg-info/top_level.txt
+sql_parser/modules/__init__.py
+sql_parser/modules/extraction_sqlglot.py
+sql_parser/modules/parse_lineages.py
+sql_parser/modules/parse_nodes.py

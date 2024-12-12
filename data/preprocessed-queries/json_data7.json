@@ -1,5 +1,0 @@
-{
-    "modified_SQL_query": "WHILE 1=1 BEGIN DELETE TOP(100000) FROM dbo.REP_Discount_Factors WHERE Market = '12/31/2021' IF @@ROWCOUNT = 0 BREAK END GO",
-    "subquery_dictionary": "",
-    "type": "while_delete"
-}

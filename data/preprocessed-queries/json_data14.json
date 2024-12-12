@@ -1,7 +1,0 @@
-{
-    "modified_SQL_query": "SELECT TYPE_CONVERSION(INT) AS forcastid FROM QRM.Run_Time_Description WHERE AND(AND(AND(AND(AND(EQ(1, 1), EQ(Portfolio, @PortfolioCurrent)), EQ(TYPE_CONVERSION(Date), TYPE_CONVERSION(Date))), COMPARE(Strategy, @LikeMatchGap)), EQ(CompanyName, @CompanyName)), EQ(DateTimeStamp, (subquery_1)))",
-    "subquery_dictionary": {
-        "subquery_1": "SELECT MAX(DateTimeStamp) FROM QRM.Run_Time_Description WHERE AND(EQ(CompanyName, @CompanyName), EQ(Portfolio, @PortfolioCurrent))"
-    },
-    "type": "select"
-}

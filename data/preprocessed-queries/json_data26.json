@@ -1,5 +1,0 @@
-{
-    "modified_SQL_query": "DECLARE @FileID AS SMALLINT = ?",
-    "subquery_dictionary": "",
-    "type": "declare"
-}

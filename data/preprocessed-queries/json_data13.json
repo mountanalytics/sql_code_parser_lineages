@@ -1,5 +1,0 @@
-{
-    "modified_SQL_query": "DECLARE @CompanyName varchar(255) = ?",
-    "subquery_dictionary": "",
-    "type": "declare"
-}

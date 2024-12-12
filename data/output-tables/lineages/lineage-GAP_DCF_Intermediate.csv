@@ -1,3 +1,0 @@
-,SOURCE,TARGET,TRANSFORMATION,FILE_NAME,ROW_ID,LINK_VALUE,SOURCE_NODE,TARGET_NODE,SOURCE_FIELD,TARGET_FIELD,COLOR
-0,query_36.value: 0,staging.GAP_DCF_Intermediate.ValueResult,,file_3,0,1,66,65,value: 0,ValueResult,aliceblue
-1,query_36.value: 0,staging.GAP_DCF_Intermediate.ValueCorrected,,file_3,0,1,66,65,value: 0,ValueCorrected,aliceblue

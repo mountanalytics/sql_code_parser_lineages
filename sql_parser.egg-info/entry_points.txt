@@ -1,0 +1,2 @@
+[console_scripts]
+sql_parser = sql_parser.main:sql_to_lineages

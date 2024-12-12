@@ -1,5 +1,0 @@
-{
-    "modified_SQL_query": "DECLARE @DataSetEmpty bit = 0",
-    "subquery_dictionary": "",
-    "type": "declare"
-}

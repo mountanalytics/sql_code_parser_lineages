@@ -1,5 +1,0 @@
-{
-    "modified_SQL_query": "IF NOT EXISTS ( SELECT 1 FROM exp.MDSStoBETValuationResult WHERE Entity = @Entity and CONVERT(date, PortfolioAsOfDate) = CONVERT(date, @PortfolioCurrent) ) SET @DataSetEmpty = 1",
-    "subquery_dictionary": "",
-    "type": "if_not_exists"
-}

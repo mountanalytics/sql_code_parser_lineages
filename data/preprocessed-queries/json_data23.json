@@ -1,5 +1,0 @@
-{
-    "modified_SQL_query": "DROP TABLE IF EXISTS [dbo].[FTP_Base_Assumption_Staging]",
-    "subquery_dictionary": "",
-    "type": "other"
-}

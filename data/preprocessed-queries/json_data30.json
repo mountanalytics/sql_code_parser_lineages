@@ -1,5 +1,0 @@
-{
-    "modified_SQL_query": "truncate table staging.Run_Time_Description",
-    "subquery_dictionary": "",
-    "type": "truncate"
-}

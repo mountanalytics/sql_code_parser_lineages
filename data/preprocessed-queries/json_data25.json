@@ -1,5 +1,0 @@
-{
-    "modified_SQL_query": "DECLARE @Period AS VARCHAR(6) = ?",
-    "subquery_dictionary": "",
-    "type": "declare"
-}

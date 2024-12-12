@@ -1,5 +1,0 @@
-{
-    "modified_SQL_query": "truncate table staging.FTP_Unpivot",
-    "subquery_dictionary": "",
-    "type": "truncate"
-}
