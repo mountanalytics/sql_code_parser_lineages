@@ -237,26 +237,22 @@ def replace_aliases(ast: sqlglot.expressions) -> sqlglot.expressions:
 
 
 def add_alias_on_anonym_transformation(ast: sqlglot.expressions):
-    print('function:')
-    select = list(ast.find_all(exp.Select))[0]
+    select = list(ast.find_all(exp.Select))[0].expressions
 
-    #def transformer_add_alias(node):
-#
-#
-    #def transformer_vars(node):
-    #        for var in list(ast.find_all(exp.Var)):
-    #            if isinstance(node, exp.Var) and node.this == f"{var}":
-    #                ret_value = "@" + declare_dict[f"@{var.this}"].replace('::', '_doubecolumns_').replace("'", '')
-    #                return parse_one(ret_value)
-    #        return node
-#
-    #ast = ast.transform(transformer_vars)
-
-
+    def transformer_add_alias(node):
+        if node == expression and type(expression) != sqlglot.expressions.Column and type(expression) != sqlglot.expressions.Alias:
+            print('no alias transformation: ')
+            print(node)
+            return parse_one(f"{node.sql('tsql')} AS ANONYM")
+        return node
 
     for expression in select:
-        if type(expression) != sqlglot.expressions.Column and type(expression) != sqlglot.expressions.Alias:
-            print(expression)
+        ast = ast.transform(transformer_add_alias)
+
+    #print(ast)
+
+    return ast
+
 
 
      
@@ -324,15 +320,13 @@ def preprocess_queries(dir:str) -> dict:
             preprocessed_queries.append(preprocessed_query)
 
         elif 'select' in query.lower() and ('update' in query.lower() or 'create' in query.lower() or 'insert' in query.lower()):
-            print('main_queryyy')
-            add_alias_on_anonym_transformation(main_query)        
+            main_query = add_alias_on_anonym_transformation(main_query)        
             preprocessed_query_json = {'modified_SQL_query': main_query.sql(), 'subquery_dictionary': subqueries_transformed_json, 'type': 'update_or_create_select'}
             save_preprocessed_query(preprocessed_query_json, i)
             preprocessed_query = {'modified_SQL_query': main_query, 'subquery_dictionary': subqueries_transformed, 'type': 'update_or_create_select'}
             preprocessed_queries.append(preprocessed_query)
 
         elif 'select' in query.lower() and not ('update' in query.lower() or 'create' in query.lower() or 'insert' in query.lower()):
-            add_alias_on_anonym_transformation(main_query)        
             preprocessed_query_json = {'modified_SQL_query': main_query.sql(), 'subquery_dictionary': subqueries_transformed_json, 'type': 'select'}
             save_preprocessed_query(preprocessed_query_json, i)
             preprocessed_query = {'modified_SQL_query': main_query, 'subquery_dictionary': subqueries_transformed, 'type': 'select'}
@@ -389,12 +383,18 @@ def preprocess_queries_ssis(queries:str, result_set :str) -> dict:
             # parse
             #ast = sqlglot.parse_one(query, dialect = 'tsql')
             #print(query)
+            #print('####')
+            #print(result_set)
+            #print(query)
+            #print('####')
 
 
             if result_set != None:
                 query = f"INSERT INTO {result_set.replace('::', '_doubecolumns_')} \n" + query
             ast = parse_one(replace_spaces_in_brackets(query).replace('[', '').replace(']', ''))
-
+            
+            #print(query)
+            #print('####')
 
             def transformer_vars(node):
                     for var in list(ast.find_all(exp.Var)):
@@ -402,8 +402,15 @@ def preprocess_queries_ssis(queries:str, result_set :str) -> dict:
                             ret_value = "@" + declare_dict[f"@{var.this}"].replace('::', '_doubecolumns_').replace("'", '')
                             return parse_one(ret_value)
                     return node
+            
+            def transformer_var_lit(node):
+                if isinstance(node, exp.Literal) and  "::" in node.this:
+                    ret_value = "@" + node.this.replace('::', '_doubecolumns_').replace("'", '')
+                    return parse_one(ret_value)
+                return node
 
             ast = ast.transform(transformer_vars)
+            ast = ast.transform(transformer_var_lit)
 
             #ast = replace_aliases(ast)
 
@@ -430,7 +437,7 @@ def preprocess_queries_ssis(queries:str, result_set :str) -> dict:
             preprocessed_queries.append(preprocessed_query)
 
         elif 'select' in query.lower() and ('update' in query.lower() or 'create' in query.lower() or 'insert' in query.lower()):
-            add_alias_on_anonym_transformation(main_query)        
+            main_query = add_alias_on_anonym_transformation(main_query)        
 
             preprocessed_query_json = {'modified_SQL_query': main_query.sql(), 'subquery_dictionary': subqueries_transformed_json, 'type': 'update_or_create_select'}
             #save_preprocessed_query(preprocessed_query_json, i)
@@ -438,7 +445,8 @@ def preprocess_queries_ssis(queries:str, result_set :str) -> dict:
             preprocessed_queries.append(preprocessed_query)
 
         elif 'select' in query.lower() and not ('update' in query.lower() or 'create' in query.lower() or 'insert' in query.lower()):
-            
+            main_query = add_alias_on_anonym_transformation(main_query)        
+
             preprocessed_query_json = {'modified_SQL_query': main_query.sql(), 'subquery_dictionary': subqueries_transformed_json, 'type': 'select'}
             #save_preprocessed_query(preprocessed_query_json, i)
             preprocessed_query = {'modified_SQL_query': main_query, 'subquery_dictionary': subqueries_transformed, 'type': 'select'}
