@@ -456,15 +456,7 @@ def extract_nodes(preprocessed_queries:list, node_name:str) -> pd.DataFrame:
 
             nodes.append({'NAME_NODE': variable,'LABEL_NODE': variable, 'FILTER': query['modified_SQL_query'], 'FUNCTION': 'query', 'JOIN_ARG': None, 'COLOR': '#d0d3d3'})
             nodes_dfs = append_convert_nodes_to_df(nodes_dfs, nodes)
-        
-        #elif query['type'] == 'truncate':
-#
-        #    table = query['modified_SQL_query'].split()[-1]
-        #    #print(table)
-        #    nodes.append({'NAME_NODE': table,'LABEL_NODE': table, 'FILTER': None, 'FUNCTION': 'DataSources', 'JOIN_ARG': None, 'COLOR': '#d0d3d3'})
-#
-        #    nodes.append({'NAME_NODE': query_node,'LABEL_NODE': query_node, 'FILTER': query['modified_SQL_query'], 'FUNCTION': 'query', 'JOIN_ARG': None, 'COLOR': '#d0d3d3'})
-        
+                
         elif query['type'] == 'insert_into':
 
             table = list(query['modified_SQL_query'].find_all(exp.Table))[0]

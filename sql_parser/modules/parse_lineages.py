@@ -306,17 +306,6 @@ def extract_lineages(preprocessed_queries:list, nodes:pd.DataFrame, node_name :s
                     lineages.append({'SOURCE': f"{query_node}[{variable}]", 'TARGET': f"{table}[{target_columns[idx]}]", 'TRANSFORMATION': ""})
 
         elif query['type'] == 'while_delete':
-            pass
-            #lineages = []
-
-     
-
-        #try:
-#
-        #    lineages_df = create_lineages_df(lineages, nodes, filename, destination)
-        #    lineages_dfs.append(lineages_df)
-        #except:
-        #    return None
-    
+            pass    
 
     return lineages
