@@ -40,14 +40,18 @@ def extract_target_columns(tree: sqlglot.expressions.Select) -> tuple[list, list
         expressions += select.expressions 
 
     target_columns =[]
-    for select in expressions: # for every select statement, find all the target columns and add them to list
-        columns = list(select.find_all(exp.Column))
+
+
+    for expression in expressions: # for every select statement, find all the target columns and add them to list
+        #print(expression)#.sql('tsql'))
+        columns = list(expression.find_all(exp.Column))
         if columns == []:
-            columns.append(str(select))
+            columns.append(str(expression))
+
+        columns.append(expression)
 
         target_columns.append([i for i in columns])
         #target_columns.append(select)
-
 
     return expressions, target_columns
 
@@ -144,42 +148,56 @@ def create_lineages_df(lineages:list, nodes:pd.DataFrame,  filename:str, destina
     return lineages
 
 
+def get_source_table(ast):
+    from_statement = list(ast.find_all(exp.From))[0]
+    source_table = list(from_statement.find_all(exp.Table))[0]
+    return source_table
 
-def extract_lineage(lineages:list, target_columns:list, query_node:str, target_node:str) -> list:
+def extract_lineage(ast, lineages:list, target_columns:list, query_node:str, target_node:str) -> list:
     """
     Extracts the lineages from a list of columns (source, target and transformation)
     """
 
     for column in target_columns:
+        #print(column)
         for source_col in column[0]:
 
             if type(source_col)!=str:
-            
-                # if there is a database name in the column
-                if source_col.db!="":
-                    db = source_col.db + "."
-                else:
-                    db = ""
-
-
-                if 'subquery' in source_col.table:
                 
+                try: # try to add the database if the source_col is an exp.Column
+                    if source_col.db!="":
+                        db = source_col.db + "."
+                    else:
+                        db = ""
+                except AttributeError:
+                    pass
 
-                    if column[1] == '': # add lineage with no transformation
-                        lineages.append({'SOURCE': f"{query_node}[{source_col.this}]", 'TARGET': f"{target_node}[{source_col.this}]", 'TRANSFORMATION': column[1]})
-                    else: # add lineage with transformation
-                        lineages.append({'SOURCE': f"{query_node}[{[source_col_i.this.this for source_col_i in column[0]]}]", 'TARGET': f"{target_node}[{column[1].split('AS')[1].strip()}]", 'TRANSFORMATION': column[1].split('AS')[0].strip()})
-                else:   
-                    if column[1] == '': # add lineage with no transformation
-                        lineages.append({'SOURCE': f"{db}{source_col.table}[{source_col.this}]", 'TARGET': f"{query_node}[{source_col.this}]", 'TRANSFORMATION': ""})
-                        lineages.append({'SOURCE': f"{query_node}[{source_col.this}]", 'TARGET': f"{target_node}[{source_col.this}]", 'TRANSFORMATION': column[1]})
-                    else: # add lineage with transformation
-                        lineages.append({'SOURCE': f"{db}{source_col.table}[{source_col.this}]", 'TARGET': f"{query_node}[{source_col.this}]", 'TRANSFORMATION': ""})
-                        lineages.append({'SOURCE': f"{query_node}[{[source_col_i.this.this for source_col_i in column[0]][0]}]", 'TARGET': f"{target_node}[{column[1].split('AS')[1].strip()}]", 'TRANSFORMATION': column[1].split('AS')[0].strip()})
+                try:
+
+                    if 'subquery' in source_col.table: 
+
+                        if column[1] == '': # add lineage with no transformation
+                            lineages.append({'SOURCE': f"{query_node}[{source_col.this}]", 'TARGET': f"{target_node}[{source_col.this}]", 'TRANSFORMATION': column[1]})
+                        else: # add lineage with transformation
+                            lineages.append({'SOURCE': f"{query_node}[{[source_col_i.this.this for source_col_i in column[0]]}]", 'TARGET': f"{target_node}[{column[1].split('AS')[1].strip()}]", 'TRANSFORMATION': column[1].split('AS')[0].strip()})
+                    else:   
+                        if column[1] == '': # add lineage with no transformation
+                            lineages.append({'SOURCE': f"{db}{source_col.table}[{source_col.this}]", 'TARGET': f"{query_node}[{source_col.this}]", 'TRANSFORMATION': ""})
+                            lineages.append({'SOURCE': f"{query_node}[{source_col.this}]", 'TARGET': f"{target_node}[{source_col.this}]", 'TRANSFORMATION': column[1]})
+                        else: # add lineage with transformation
+                            lineages.append({'SOURCE': f"{db}{source_col.table}[{source_col.this}]", 'TARGET': f"{query_node}[{source_col.this}]", 'TRANSFORMATION': ""})
+                            lineages.append({'SOURCE': f"{query_node}[{[source_col_i.this.this for source_col_i in column[0]][0]}]", 'TARGET': f"{target_node}[{column[1].split('AS')[1].strip()}]", 'TRANSFORMATION': column[1].split('AS')[0].strip() if column[1].split('AS')[0].strip() not in [source_col_i.this.this for source_col_i in column[0]][0] else ""}) #column[1].split('AS')[0].strip()})
+                    
+                except:
+                    pass
+                    #print(source_col)
             else:
                 
+                if list(ast.find_all(exp.Join)) == []: # if there are no joins then parse from from statement
+                    source_table = get_source_table(ast)   
+                    lineages.append({'SOURCE': f"{source_table}[{source_col.split('AS')[0].strip()}]", 'TARGET': f"{query_node}[{source_col.split('AS')[0].strip()}]", 'TRANSFORMATION': ""})
 
-                lineages.append({'SOURCE': f"{query_node}[{source_col}]", 'TARGET': f"{target_node}[{source_col}]", 'TRANSFORMATION': source_col})
+                lineages.append({'SOURCE': f"{query_node}[{source_col.split('AS')[0].strip()}]", 'TARGET': f"{target_node}[{source_col.split('AS')[-1].strip()}]", 'TRANSFORMATION': source_col})
 
 
     return lineages
@@ -196,6 +214,7 @@ def extract_lineages(preprocessed_queries:list, nodes:pd.DataFrame, node_name :s
 
     for i, query in enumerate(preprocessed_queries): # for query in queries
         query_node = f"query_{node_name}_{i+1}"
+
         if query['type'] == 'update_or_create_select': # or  query['type'] == 'select' ### to add select without create or update
 
             query = reverse_subquery(query)
@@ -209,7 +228,7 @@ def extract_lineages(preprocessed_queries:list, nodes:pd.DataFrame, node_name :s
             # insert into try except goes here
             for component in query.keys(): # for query component (sub/main queries) in query
                 print(component)
-                target_columns =[]
+                target_columns = []
                 # preprocess query and extract all useful information
                 ast = query[component]
                 space_table = find_table_w_spaces(ast) # list with tables with spaces (sqlglot cant parse them)
@@ -217,19 +236,18 @@ def extract_lineages(preprocessed_queries:list, nodes:pd.DataFrame, node_name :s
                 tree = replace_aliases(query[component]) # remove table aliases
                 
                 select_statement, target_columns = extract_target_columns(tree) # extract target columns
+                #print(target_columns)
                 select_statement = [x.transform(transformer_functions) for x in select_statement] # remove column aliases
                 transformations = extract_transformation(select_statement)
                 target_columns = list(zip(target_columns, transformations)) 
                 query_node, target_node = get_next_nodes(query, component, destination)
-                lineages = extract_lineage(lineages, target_columns, query_node, target_node)
+                lineages = extract_lineage(ast, lineages, target_columns, query_node, target_node)
 
                 try:
                     where = list(ast.find_all(exp.Where))[0]
                     variables = list(where.find_all(exp.Var))
-
                     for variable in variables: 
                         lineages.append({'SOURCE_COLUMNS':f'@{variable}[{variable}]', 'TARGET_COLUMN':f"{query_node}[{variable}]", 'TRANSFORMATION':""})
-
                 except:
                     pass
                 
