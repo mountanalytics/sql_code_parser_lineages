@@ -159,7 +159,6 @@ def extract_lineage(ast, lineages:list, target_columns:list, query_node:str, tar
     """
 
     for column in target_columns:
-        #print(column)
         for source_col in column[0]:
 
             if type(source_col)!=str:
@@ -234,6 +233,7 @@ def extract_lineages(preprocessed_queries:list, nodes:pd.DataFrame, node_name :s
                 space_table = find_table_w_spaces(ast) # list with tables with spaces (sqlglot cant parse them)
                 alias_table = get_tables(ast) # parse table name + table alias
                 tree = replace_aliases(query[component]) # remove table aliases
+                #print(repr(tree))
                 
                 select_statement, target_columns = extract_target_columns(tree) # extract target columns
                 #print(target_columns)
@@ -247,7 +247,7 @@ def extract_lineages(preprocessed_queries:list, nodes:pd.DataFrame, node_name :s
                     where = list(ast.find_all(exp.Where))[0]
                     variables = list(where.find_all(exp.Var))
                     for variable in variables: 
-                        lineages.append({'SOURCE_COLUMNS':f'@{variable}[{variable}]', 'TARGET_COLUMN':f"{query_node}[{variable}]", 'TRANSFORMATION':""})
+                        lineages.append({'SOURCE':f'@{variable}[{variable}]', 'TARGET':f"{query_node}[{variable}]", 'TRANSFORMATION':""})
                 except:
                     pass
                 

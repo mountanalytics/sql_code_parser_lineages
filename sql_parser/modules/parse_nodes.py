@@ -55,6 +55,10 @@ def get_tables(ast: sqlglot.expressions.Select):
     Extracts the table names and their aliases, used to reconstruct a tuple with structure (database+schema+name, alias )
     """
     # find all tables
+    try:
+        ast = list(ast.find_all(exp.Select))[0]
+    except IndexError:
+        pass
     table_alias = list(ast.find_all(exp.Table))
     alias_table = []
     # extract information from each table
@@ -192,6 +196,10 @@ def add_node_mainquery(nodes:list, ast: sqlglot.expressions, where_exp, on_condi
     """
     Add main query node to the nodes list
     """
+
+    #print(str(list(ast.find_all(exp.Select))[0].expressions[0]).split('(')[0])
+
+
     try: # try to find the create or insert into statements
         target_node = list(ast.find_all(exp.Create))[0].this.this.this
         nodes.append({'NAME_NODE': f"query_{target_node}",'LABEL_NODE': f"query_{target_node}", 'FILTER': where_exp, 'FUNCTION': 'query', 'JOIN_ARG': on_condition, 'COLOR': '#d0d3d3'})
@@ -475,6 +483,6 @@ def extract_nodes(preprocessed_queries:list, node_name:str) -> pd.DataFrame:
             nodes_dfs = append_convert_nodes_to_df(nodes_dfs, nodes)
 
 
-    nodes_df = create_nodes_df(nodes_dfs)
+    #nodes_df = create_nodes_df(nodes_dfs)
 
     return nodes

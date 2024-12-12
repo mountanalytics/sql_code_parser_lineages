@@ -62,7 +62,7 @@ def split_sql_string_to_sections(sql_string):
 
 
 
-def open_queries(dir:str) -> list:
+def split_queries(dir:str) -> list:
     """
     Open TSQL queries from one text file
     """ 
@@ -236,6 +236,36 @@ def replace_aliases(ast: sqlglot.expressions) -> sqlglot.expressions:
 
 
 
+def add_alias_on_anonym_transformation(ast: sqlglot.expressions):
+    print('function:')
+    select = list(ast.find_all(exp.Select))[0]
+
+    #def transformer_add_alias(node):
+#
+#
+    #def transformer_vars(node):
+    #        for var in list(ast.find_all(exp.Var)):
+    #            if isinstance(node, exp.Var) and node.this == f"{var}":
+    #                ret_value = "@" + declare_dict[f"@{var.this}"].replace('::', '_doubecolumns_').replace("'", '')
+    #                return parse_one(ret_value)
+    #        return node
+#
+    #ast = ast.transform(transformer_vars)
+
+
+
+    for expression in select:
+        if type(expression) != sqlglot.expressions.Column and type(expression) != sqlglot.expressions.Alias:
+            print(expression)
+
+
+     
+    #print([type(expression) for expression in list(ast.find_all(exp.Select))[0]])
+    #print(type(repr(list(ast.find_all(exp.Select))[0].expressions[0])))
+    #print(str(list(ast.find_all(exp.Select))[0].expressions[0]).split('(')[0])
+
+
+
 def replace_spaces_in_brackets(input_string: str, replacement: str = "_space_" ) -> str:
     """
     Replaces spaces within square brackets [] in a string with replacement using regex.
@@ -259,7 +289,7 @@ def preprocess_queries(dir:str) -> dict:
     Orchestrates the preprocessing and extraction of the SQL queries
     """
     preprocessed_queries = []
-    sql_queries = open_queries(dir)
+    sql_queries = split_queries(dir)
 
     for i, query in enumerate(sql_queries):
         query = query.replace("GETDATE()", "CURRENT_TIMESTAMP")
@@ -294,14 +324,15 @@ def preprocess_queries(dir:str) -> dict:
             preprocessed_queries.append(preprocessed_query)
 
         elif 'select' in query.lower() and ('update' in query.lower() or 'create' in query.lower() or 'insert' in query.lower()):
-            
+            print('main_queryyy')
+            add_alias_on_anonym_transformation(main_query)        
             preprocessed_query_json = {'modified_SQL_query': main_query.sql(), 'subquery_dictionary': subqueries_transformed_json, 'type': 'update_or_create_select'}
             save_preprocessed_query(preprocessed_query_json, i)
             preprocessed_query = {'modified_SQL_query': main_query, 'subquery_dictionary': subqueries_transformed, 'type': 'update_or_create_select'}
             preprocessed_queries.append(preprocessed_query)
 
         elif 'select' in query.lower() and not ('update' in query.lower() or 'create' in query.lower() or 'insert' in query.lower()):
-            
+            add_alias_on_anonym_transformation(main_query)        
             preprocessed_query_json = {'modified_SQL_query': main_query.sql(), 'subquery_dictionary': subqueries_transformed_json, 'type': 'select'}
             save_preprocessed_query(preprocessed_query_json, i)
             preprocessed_query = {'modified_SQL_query': main_query, 'subquery_dictionary': subqueries_transformed, 'type': 'select'}
@@ -363,6 +394,8 @@ def preprocess_queries_ssis(queries:str, result_set :str) -> dict:
             if result_set != None:
                 query = f"INSERT INTO {result_set.replace('::', '_doubecolumns_')} \n" + query
             ast = parse_one(replace_spaces_in_brackets(query).replace('[', '').replace(']', ''))
+
+
             def transformer_vars(node):
                     for var in list(ast.find_all(exp.Var)):
                         if isinstance(node, exp.Var) and node.this == f"{var}":
@@ -397,7 +430,8 @@ def preprocess_queries_ssis(queries:str, result_set :str) -> dict:
             preprocessed_queries.append(preprocessed_query)
 
         elif 'select' in query.lower() and ('update' in query.lower() or 'create' in query.lower() or 'insert' in query.lower()):
-            
+            add_alias_on_anonym_transformation(main_query)        
+
             preprocessed_query_json = {'modified_SQL_query': main_query.sql(), 'subquery_dictionary': subqueries_transformed_json, 'type': 'update_or_create_select'}
             #save_preprocessed_query(preprocessed_query_json, i)
             preprocessed_query = {'modified_SQL_query': main_query, 'subquery_dictionary': subqueries_transformed, 'type': 'update_or_create_select'}
