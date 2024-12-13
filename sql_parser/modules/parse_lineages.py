@@ -233,17 +233,15 @@ def extract_lineages(preprocessed_queries:list, nodes:pd.DataFrame, node_name :s
                 space_table = find_table_w_spaces(ast) # list with tables with spaces (sqlglot cant parse them)
                 alias_table = get_tables(ast) # parse table name + table alias
                 tree = replace_aliases(query[component]) # remove table aliases
-                #print(repr(tree))
                 
                 select_statement, target_columns = extract_target_columns(tree) # extract target columns
-                #print(target_columns)
                 select_statement = [x.transform(transformer_functions) for x in select_statement] # remove column aliases
                 transformations = extract_transformation(select_statement)
                 target_columns = list(zip(target_columns, transformations)) 
                 query_node, target_node = get_next_nodes(query, component, destination)
                 lineages = extract_lineage(ast, lineages, target_columns, query_node, target_node)
 
-                try:
+                try: # try and add variables from where statement
                     where = list(ast.find_all(exp.Where))[0]
                     variables = list(where.find_all(exp.Var))
                     for variable in variables: 
@@ -254,8 +252,6 @@ def extract_lineages(preprocessed_queries:list, nodes:pd.DataFrame, node_name :s
         elif query['type'] == 'update_or_create_set':
             filename = f"file_{i}"
 
-
-            #lineages = []
 
             ast = replace_aliases(query['modified_SQL_query'])
             ast = replace_alias_update_table(ast)
@@ -290,7 +286,6 @@ def extract_lineages(preprocessed_queries:list, nodes:pd.DataFrame, node_name :s
         elif query['type'] == 'insert_into':
             filename = f"file_{i}"
 
-            #lineages = []
             table = list(query['modified_SQL_query'].find_all(exp.Table))[0]
             destination = table
 
@@ -306,6 +301,10 @@ def extract_lineages(preprocessed_queries:list, nodes:pd.DataFrame, node_name :s
                     lineages.append({'SOURCE_COLUMNS': f"{query_node}[{variable}]", 'TARGET_COLUMN': f"{table}[{target_columns[idx]}]", 'TRANSFORMATION': f"{variable}"})
 
         elif query['type'] == 'while_delete':
-            pass    
+            ast = query['modified_SQL_query']
+            tables = list(ast.find_all(exp.Table))
+                    
+            lineages.append({'SOURCE_COLUMNS': f"{tables[1]}[DEL]", 'TARGET_COLUMN':f"{query_node}[DEL]",  'TRANSFORMATION': ""})
 
+            
     return lineages

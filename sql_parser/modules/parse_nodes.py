@@ -455,7 +455,7 @@ def extract_nodes(preprocessed_queries:list, node_name:str, variable_tables:dict
             where_exp = list(ast.find_all(exp.Where))
             tables = list(ast.find_all(exp.Table))
 
-            nodes.append({'NAME_NODE': tables[1],'LABEL_NODE': tables[1], 'FILTER': None, 'FUNCTION': 'DataSources', 'JOIN_ARG': None, 'COLOR': '#d0d3d3'})
+            nodes.append({'NAME_NODE': str(tables[1]),'LABEL_NODE': str(tables[1]), 'FILTER': None, 'FUNCTION': 'DataSources', 'JOIN_ARG': None, 'COLOR': '#d0d3d3'})
             nodes.append({'NAME_NODE': query_node,'LABEL_NODE': query_node, 'FILTER': 'DELETE ' + sql_to_natural_language(where_exp[0].sql('tsql')), 'FUNCTION': 'query', 'JOIN_ARG': None, 'COLOR': '#d0d3d3'})
 
             nodes_dfs = append_convert_nodes_to_df(nodes_dfs, nodes)
