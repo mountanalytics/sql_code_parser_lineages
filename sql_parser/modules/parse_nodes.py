@@ -488,16 +488,30 @@ def extract_nodes(preprocessed_queries:list, node_name:str, variable_tables:dict
             where_exp = list(ast.find_all(exp.Where))
             tables = list(ast.find_all(exp.Table))
 
-            nodes.append({'NAME_NODE': str(tables[1]),'LABEL_NODE': str(tables[1]), 'FILTER': None, 'FUNCTION': 'DataSources', 'JOIN_ARG': None, 'COLOR': '#d0d3d3'})
+            nodes.append({'NAME_NODE': str(tables[1]),'LABEL_NODE': str(tables[1]), 'FILTER': None, 'FUNCTION': 'DataSources', 'JOIN_ARG': None, 'COLOR': '#42d6a4'})
             nodes.append({'NAME_NODE': query_node,'LABEL_NODE': query_node, 'FILTER': 'DELETE ' + sql_to_natural_language(where_exp[0].sql('tsql')), 'FUNCTION': 'query', 'JOIN_ARG': None, 'COLOR': '#d0d3d3'})
 
             nodes_dfs = append_convert_nodes_to_df(nodes_dfs, nodes)
 
         elif query['type'] == 'declare':
 
-            variable = query['modified_SQL_query'].split("=")[1].strip()
- 
-            nodes.append({'NAME_NODE': variable,'LABEL_NODE': variable, 'FILTER': None, 'FUNCTION': 'variable', 'JOIN_ARG': None, 'COLOR': '#d0d3d3'})
+            ### NEW VERSION
+            variable_1 = query['modified_SQL_query'].split("=")[1].strip()
+            variable_0 = query['modified_SQL_query'].split("=")[0].strip()
+
+
+            if "::" in variable_1: # if variable is an SSIS variable then add SSIS variable to nodes, else the variable name stays the same
+                variable = variable_1 
+                nodes.append({'NAME_NODE': variable,'LABEL_NODE': variable, 'FILTER': None, 'FUNCTION': 'variable', 'JOIN_ARG': None, 'COLOR': '#d0d3d3'})
+            else:
+                variable = re.findall(r'@\w+', query['modified_SQL_query'])[0].replace('@', '')
+                value = query['modified_SQL_query'].split("=")[1].strip()
+                nodes.append({'NAME_NODE': variable,'LABEL_NODE': variable, 'FILTER': value, 'FUNCTION': 'variable', 'JOIN_ARG': None, 'COLOR': '#d0d3d3'})
+
+            ### OLD VERSION
+            #variable = query['modified_SQL_query'].split("=")[1].strip() 
+            #nodes.append({'NAME_NODE': variable,'LABEL_NODE': variable, 'FILTER': None, 'FUNCTION': 'variable', 'JOIN_ARG': None, 'COLOR': '#d0d3d3'})
+
             nodes_dfs = append_convert_nodes_to_df(nodes_dfs, nodes)
         
         elif query['type'] == 'if_not_exists':
