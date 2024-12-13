@@ -204,11 +204,11 @@ def add_node_mainquery(nodes:list, ast: sqlglot.expressions, where_exp, on_condi
     try: # try to find the create or insert into statements
         target_node = list(ast.find_all(exp.Create))[0].this.this.this
         nodes.append({'NAME_NODE': f"query_{target_node}",'LABEL_NODE': f"query_{target_node}", 'FILTER': where_exp, 'FUNCTION': 'query', 'JOIN_ARG': on_condition, 'COLOR': '#d0d3d3'})
-        nodes.append({'NAME_NODE': target_node,'LABEL_NODE': target_node, 'FILTER': None, 'FUNCTION': 'target', 'JOIN_ARG': None, 'COLOR': "#42d6a4"})
+        nodes.append({'NAME_NODE': target_node,'LABEL_NODE': target_node, 'FILTER': None, 'FUNCTION': 'target', 'JOIN_ARG': None, 'COLOR': "#d0d3d3"})
     except IndexError:
         target_node = list(ast.find_all(exp.Insert))[0].this.this.this
-        nodes.append({'NAME_NODE': f"query_{target_node}",'LABEL_NODE': f"query_{target_node}", 'FILTER': where_exp, 'FUNCTION': 'query', 'JOIN_ARG': on_condition, 'COLOR': '#d0d3d3'})
-        nodes.append({'NAME_NODE': target_node,'LABEL_NODE': target_node, 'FILTER': None, 'FUNCTION': 'target', 'JOIN_ARG': None, 'COLOR': "#42d6a4"})
+        nodes.append({'NAME_NODE': f"query_{target_node}",'LABEL_NODE': f"query_{target_node}", 'FILTER': where_exp, 'FUNCTION': 'query', 'JOIN_ARG': on_condition, 'COLOR': '#9D94FF'})
+        nodes.append({'NAME_NODE': target_node,'LABEL_NODE': target_node, 'FILTER': None, 'FUNCTION': 'variable', 'JOIN_ARG': None, 'COLOR': "#D0D708"})
     return nodes
 
 
@@ -477,7 +477,7 @@ def extract_nodes(preprocessed_queries:list, node_name:str, variable_tables:dict
             # source
             nodes.append({'NAME_NODE':f"{target_db}{target_node}",'LABEL_NODE': f"{target_db}{target_node}", 'FILTER': None, 'FUNCTION': 'DataSources', 'JOIN_ARG': None, 'COLOR': "#42d6a4"})
             # query
-            nodes.append({'NAME_NODE': query_node,'LABEL_NODE': query_node, 'FILTER': where_exp, 'FUNCTION': 'query', 'JOIN_ARG': str(on_condition), 'COLOR': '#d0d3d3'})
+            nodes.append({'NAME_NODE': query_node,'LABEL_NODE': query_node, 'FILTER': where_exp, 'FUNCTION': 'query', 'JOIN_ARG': str(on_condition), 'COLOR': '#9D94FF'})
             # target
             #nodes.append({'NAME_NODE': f"{target_db}.{target_node}",'LABEL_NODE': f"{target_db}.{target_node}", 'FILTER': None, 'FUNCTION': 'target', 'JOIN_ARG': on_condition, 'COLOR': "#42d6a4"})
             nodes_dfs = append_convert_nodes_to_df(nodes_dfs, nodes)
@@ -497,7 +497,7 @@ def extract_nodes(preprocessed_queries:list, node_name:str, variable_tables:dict
 
             variable = query['modified_SQL_query'].split("=")[1].strip()
  
-            nodes.append({'NAME_NODE': variable,'LABEL_NODE': variable, 'FILTER': None, 'FUNCTION': 'variable', 'JOIN_ARG': None, 'COLOR': '#d0d3d3'})
+            nodes.append({'NAME_NODE': variable,'LABEL_NODE': variable, 'FILTER': None, 'FUNCTION': 'variable', 'JOIN_ARG': None, 'COLOR': '#D0D708'})
             nodes_dfs = append_convert_nodes_to_df(nodes_dfs, nodes)
         
         elif query['type'] == 'if_not_exists':
