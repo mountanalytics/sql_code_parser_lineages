@@ -333,6 +333,39 @@ def sql_to_natural_language(sql_where_clause):
     return " or ".join(explanation)
 
 
+def get_variable_tables(ast, variable_tables):
+
+    def extract_target_columns(ast: sqlglot.expressions.Select):
+        """
+        From the query in input, get all the columns from the select statement
+        """
+        # extract target columns
+        select_statement_big = ast.find_all(exp.Select) # find all select statements
+
+        select_statement = []
+        for select in list(select_statement_big): # for every select statements, extract the columns
+            select_statement += select.expressions 
+
+        target_columns = []
+        for select in select_statement: # for every select statement, find all the target columns and add them to list
+            columns = list(select.find_all(exp.Column))
+            target_columns.append([i for i in columns])
+
+        return select_statement, target_columns
+    
+    _, target_columns = extract_target_columns(ast)
+    
+    insert_tables = [table.this.this.this for table in ast.find_all(exp.Insert)]
+    insert_tables += [table.this.this.this for table in ast.find_all(exp.Into)]
+
+
+
+    for table in insert_tables:     
+        if '_doublecolumns_' in table: # if result table is a variable
+            variable_tables[table] = [(col[0].this.this, i) for i, col in enumerate(target_columns)]
+
+    return variable_tables
+
 def extract_nodes(preprocessed_queries:list, node_name:str, variable_tables:dict) -> pd.DataFrame:
     """
     Orchestrates the extraction of the nodes from a list of queries, the output being a nodes pd.DataFrame
@@ -462,7 +495,8 @@ def extract_nodes(preprocessed_queries:list, node_name:str, variable_tables:dict
 
         elif query['type'] == 'declare':
 
-            variable = re.findall(r'@\w+', query['modified_SQL_query'])[0]
+            variable = query['modified_SQL_query'].split("=")[1].strip()
+ 
             nodes.append({'NAME_NODE': variable,'LABEL_NODE': variable, 'FILTER': None, 'FUNCTION': 'variable', 'JOIN_ARG': None, 'COLOR': '#d0d3d3'})
             nodes_dfs = append_convert_nodes_to_df(nodes_dfs, nodes)
         
@@ -497,35 +531,3 @@ def extract_nodes(preprocessed_queries:list, node_name:str, variable_tables:dict
 
 
 
-def get_variable_tables(ast, variable_tables):
-
-    def extract_target_columns(ast: sqlglot.expressions.Select):
-        """
-        From the query in input, get all the columns from the select statement
-        """
-        # extract target columns
-        select_statement_big = ast.find_all(exp.Select) # find all select statements
-
-        select_statement = []
-        for select in list(select_statement_big): # for every select statements, extract the columns
-            select_statement += select.expressions 
-
-        target_columns = []
-        for select in select_statement: # for every select statement, find all the target columns and add them to list
-            columns = list(select.find_all(exp.Column))
-            target_columns.append([i for i in columns])
-
-        return select_statement, target_columns
-    
-    _, target_columns = extract_target_columns(ast)
-    
-    insert_tables = [table.this.this.this for table in ast.find_all(exp.Insert)]
-    insert_tables += [table.this.this.this for table in ast.find_all(exp.Into)]
-
-
-
-    for table in insert_tables:     
-        if '_doubecolumns_' in table: # if result table is a variable
-            variable_tables[table] = [(col[0].this.this, i) for i, col in enumerate(target_columns)]
-
-    return variable_tables

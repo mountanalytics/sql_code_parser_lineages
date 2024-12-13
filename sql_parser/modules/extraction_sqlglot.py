@@ -390,7 +390,7 @@ def preprocess_queries_ssis(queries:str, result_set :str) -> dict:
 
 
             if result_set != None:
-                query = f"INSERT INTO {result_set.replace('::', '_doubecolumns_')} \n" + query
+                query = f"INSERT INTO {result_set.replace('::', '_doublecolumns_')} \n" + query
             ast = parse_one(replace_spaces_in_brackets(query).replace('[', '').replace(']', ''))
             
             #print(query)
@@ -399,13 +399,13 @@ def preprocess_queries_ssis(queries:str, result_set :str) -> dict:
             def transformer_vars(node):
                     for var in list(ast.find_all(exp.Var)):
                         if isinstance(node, exp.Var) and node.this == f"{var}":
-                            ret_value = "@" + declare_dict[f"@{var.this}"].replace('::', '_doubecolumns_').replace("'", '')
+                            ret_value = "@" + declare_dict[f"@{var.this}"].replace('::', '_doublecolumns_').replace("'", '')
                             return parse_one(ret_value)
                     return node
             
             def transformer_var_lit(node):
                 if isinstance(node, exp.Literal) and  "::" in node.this:
-                    ret_value = "@" + node.this.replace('::', '_doubecolumns_').replace("'", '')
+                    ret_value = "@" + node.this.replace('::', '_doublecolumns_').replace("'", '')
                     return parse_one(ret_value)
                 return node
 
