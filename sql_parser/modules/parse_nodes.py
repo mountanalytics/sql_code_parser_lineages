@@ -104,8 +104,9 @@ def extract_join_statements(tree: sqlglot.expressions, source_tables: list) -> l
     """
     join_exp = list(tree.find_all(exp.Join))
     if join_exp != []:
-        join_table = str(join_exp[0].this).split(' AS')[0] # table
-        source_tables.append(join_table)
+        for join in join_exp:
+            join_table = str(join.this).split(' AS')[0] # table
+            source_tables.append(join_table)
     else:
         join_exp = None
     return source_tables
@@ -216,7 +217,7 @@ def add_node_sourcetables(nodes:list, source_tables:list, file_name:str, on_cond
     Add source tables to nodes list
     """
     for table in source_tables:
-        if table not in [node['NAME_NODE'] for node in nodes]:
+        #if table not in [node['NAME_NODE'] for node in nodes]:
             if 'subquery' in table: 
                 nodes.append({'NAME_NODE': table,'LABEL_NODE': f'{file_name}@{table}', 'FILTER': None, 'FUNCTION': 'subquery', 'JOIN_ARG': on_condition, 'COLOR': '#d0d3d3'})
             else:
@@ -250,7 +251,7 @@ def create_nodes_df(nodes_dfs:list) -> pd.DataFrame:
     """
     nodes = pd.concat(nodes_dfs).reset_index(drop=True)
     nodes['JOIN_ARG'] = nodes['JOIN_ARG'].apply(lambda x: None if x == [] else x) # remove empty lists
-    nodes = nodes.drop_duplicates(subset=['NAME_NODE', 'LABEL_NODE', 'FUNCTION']).reset_index(drop=True)
+    nodes = nodes.drop_duplicates(subset=['NAME_NODE', 'LABEL_NODE', 'FILTER', 'JOIN_ARG']).reset_index(drop=True)
     nodes['ID'] = nodes.index
 
     try:
@@ -332,7 +333,7 @@ def sql_to_natural_language(sql_where_clause):
     return " or ".join(explanation)
 
 
-def extract_nodes(preprocessed_queries:list, node_name:str) -> pd.DataFrame:
+def extract_nodes(preprocessed_queries:list, node_name:str, variable_tables:dict) -> pd.DataFrame:
     """
     Orchestrates the extraction of the nodes from a list of queries, the output being a nodes pd.DataFrame
     """
@@ -343,18 +344,25 @@ def extract_nodes(preprocessed_queries:list, node_name:str) -> pd.DataFrame:
     nodes_dfs = []
     queries= []
 
+
     for i, query in enumerate(preprocessed_queries):
 
         query_node = f"query_{node_name}_{i+1}"
 
         if query['type'] == 'update_or_create_select': # or  query['type'] == 'select' ### to add select without create or update
 
+
             query_subqueries = reverse_subquery(query)
 
             filename = node_name
             #nodes = []
             for name_query in query_subqueries:
+
+
                 ast = query_subqueries[name_query]
+
+                variable_tables= get_variable_tables(ast, variable_tables)
+
                 # CLEAN QUERY
                 select_statement_big = clean_query(query_subqueries[name_query])
 
@@ -485,4 +493,39 @@ def extract_nodes(preprocessed_queries:list, node_name:str) -> pd.DataFrame:
 
     #nodes_df = create_nodes_df(nodes_dfs)
 
-    return nodes
+    return nodes, variable_tables
+
+
+
+def get_variable_tables(ast, variable_tables):
+
+    def extract_target_columns(ast: sqlglot.expressions.Select):
+        """
+        From the query in input, get all the columns from the select statement
+        """
+        # extract target columns
+        select_statement_big = ast.find_all(exp.Select) # find all select statements
+
+        select_statement = []
+        for select in list(select_statement_big): # for every select statements, extract the columns
+            select_statement += select.expressions 
+
+        target_columns = []
+        for select in select_statement: # for every select statement, find all the target columns and add them to list
+            columns = list(select.find_all(exp.Column))
+            target_columns.append([i for i in columns])
+
+        return select_statement, target_columns
+    
+    _, target_columns = extract_target_columns(ast)
+    
+    insert_tables = [table.this.this.this for table in ast.find_all(exp.Insert)]
+    insert_tables += [table.this.this.this for table in ast.find_all(exp.Into)]
+
+
+
+    for table in insert_tables:     
+        if '_doubecolumns_' in table: # if result table is a variable
+            variable_tables[table] = [(col[0].this.this, i) for i, col in enumerate(target_columns)]
+
+    return variable_tables

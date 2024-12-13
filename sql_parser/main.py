@@ -34,13 +34,12 @@ def main(query, result_set, nodes, lineages, variable_tables, node_name):
     """
     Orchestrator
     """
-
     preprocessed_queries = preprocess_queries_ssis(query, result_set) # 'data/queries-txts/WorldWideImporters 1.txt'
 
     #print(preprocessed_queries)
     #print(result_set)
 
-    nodes_q = extract_nodes(preprocessed_queries, node_name)
+    nodes_q, variable_tables = extract_nodes(preprocessed_queries, node_name, variable_tables)
     #print(nodes_q)
     lineages_q = extract_lineages(preprocessed_queries, nodes_q, node_name)
     #print(lineages_q)
