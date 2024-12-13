@@ -494,10 +494,26 @@ def extract_nodes(preprocessed_queries:list, node_name:str, variable_tables:dict
             nodes_dfs = append_convert_nodes_to_df(nodes_dfs, nodes)
 
         elif query['type'] == 'declare':
+            
+            ### NEW VERSION
+            variable_1 = query['modified_SQL_query'].split("=")[1].strip()
+            variable_0 = query['modified_SQL_query'].split("=")[0].strip()
 
-            variable = query['modified_SQL_query'].split("=")[1].strip()
+
+            if "::" in variable_1: # if variable is an SSIS variable then add SSIS variable to nodes, else the variable name stays the same
+                variable = variable_1 
+                nodes.append({'NAME_NODE': variable,'LABEL_NODE': variable, 'FILTER': None, 'FUNCTION': 'variable', 'JOIN_ARG': None, 'COLOR': '#d0d3d3'})
+            else:
+                variable = re.findall(r'@\w+', query['modified_SQL_query'])[0].replace('@', '')
+                value = query['modified_SQL_query'].split("=")[1].strip()
+                nodes.append({'NAME_NODE': variable,'LABEL_NODE': variable, 'FILTER': value, 'FUNCTION': 'variable', 'JOIN_ARG': None, 'COLOR': '#d0d3d3'})
+
+            ### OLD VERSION
+            #variable = query['modified_SQL_query'].split("=")[1].strip() 
+            #nodes.append({'NAME_NODE': variable,'LABEL_NODE': variable, 'FILTER': None, 'FUNCTION': 'variable', 'JOIN_ARG': None, 'COLOR': '#d0d3d3'})
+
+
  
-            nodes.append({'NAME_NODE': variable,'LABEL_NODE': variable, 'FILTER': None, 'FUNCTION': 'variable', 'JOIN_ARG': None, 'COLOR': '#D0D708'})
             nodes_dfs = append_convert_nodes_to_df(nodes_dfs, nodes)
         
         elif query['type'] == 'if_not_exists':
