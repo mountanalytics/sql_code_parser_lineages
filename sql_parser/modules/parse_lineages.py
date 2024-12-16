@@ -226,7 +226,6 @@ def extract_lineages(preprocessed_queries:list, nodes:pd.DataFrame, node_name :s
 
             # insert into try except goes here
             for component in query.keys(): # for query component (sub/main queries) in query
-                print(component)
                 target_columns = []
                 # preprocess query and extract all useful information
                 ast = query[component]

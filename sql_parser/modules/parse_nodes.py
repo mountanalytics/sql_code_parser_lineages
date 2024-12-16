@@ -520,7 +520,7 @@ def extract_nodes(preprocessed_queries:list, node_name:str, variable_tables:dict
 
             variable = re.findall(r'@\w+', query['modified_SQL_query'])[-1]
 
-            nodes.append({'NAME_NODE': variable,'LABEL_NODE': variable, 'FILTER': query['modified_SQL_query'], 'FUNCTION': 'query', 'JOIN_ARG': None, 'COLOR': '#d0d3d3'})
+            nodes.append({'NAME_NODE': variable,'LABEL_NODE': variable, 'FILTER': query['modified_SQL_query'], 'FUNCTION': 'variable', 'JOIN_ARG': None, 'COLOR': '#d0d3d3'})
             nodes_dfs = append_convert_nodes_to_df(nodes_dfs, nodes)
                 
         elif query['type'] == 'insert_into':
