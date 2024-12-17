@@ -247,7 +247,6 @@ def extract_lineages(preprocessed_queries:list, nodes:pd.DataFrame, node_name :s
                 
                 select_statement, target_columns = extract_target_columns(tree) # extract target columns
                 #select_statement = [x.transform(transformer_functions) for x in select_statement] # remove column aliases
-                print(target_columns)
                 transformations = extract_transformation(select_statement)
                 target_columns = list(zip(target_columns, transformations)) 
                 query_node, target_node = get_next_nodes(query, component, destination)
@@ -255,6 +254,7 @@ def extract_lineages(preprocessed_queries:list, nodes:pd.DataFrame, node_name :s
 
                 try: # try and add variables from where statement
                     where = list(ast.find_all(exp.Where))[0]
+                    #print(where)
                     variables = list(where.find_all(exp.Var))
                     for variable in variables: 
                         lineages.append({'SOURCE_COLUMNS':f'@{variable}[{variable}]', 'TARGET_COLUMN':f"{query_node}[{variable}]", 'TRANSFORMATION':""})

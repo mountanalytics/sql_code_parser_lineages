@@ -106,7 +106,9 @@ def extract_join_statements(tree: sqlglot.expressions, source_tables: list) -> l
     if join_exp != []:
         for join in join_exp:
             join_table = str(join.this).split(' AS')[0] # table
+            #source_tables.append(join.sql('tsql'))
             source_tables.append(join_table)
+
     else:
         join_exp = None
     return source_tables
@@ -118,7 +120,8 @@ def extract_where_statements(tree: sqlglot.expressions) -> str:
     """
     where_exp = list(tree.find_all(exp.Where))
     if where_exp != []:
-        where_exp = str(where_exp[0].this.sql('tsql')).split(' AS')[0]# table
+        print(repr(where_exp[0]))
+        where_exp = str(where_exp[0].this.sql('tsql'))#.split(' AS')[0]# table
         #where_exp = sql_to_natural_language(str(where_exp[0].this.sql('tsql'))).split(' AS')[0]# table
         return where_exp.replace("_doublecolumns_", "::").replace("@", "")
     else:
@@ -187,7 +190,7 @@ def add_node_subquery(nodes:list, query_name:str, file_name:str, where_exp:str, 
     """
     target_node = query_name
     #nodes.append({'NAME_NODE': f"{target_node}", 'LABEL_NODE': f'{file_name}@{target_node}', 'FILTER': where_exp, 'FUNCTION': 'subquery', 'JOIN_ARG': on_condition})
-    nodes.append({'NAME_NODE': target_node, 'LABEL_NODE': f'{file_name}@{target_node}', 'FILTER': where_exp, 'FUNCTION': 'subquery', 'JOIN_ARG': on_condition, 'COLOR': '#d0d3d3'})
+    nodes.append({'NAME_NODE': target_node, 'LABEL_NODE': f'{file_name}@{target_node}', 'FILTER': sql_to_natural_language(where_exp) if where_exp != None else where_exp, 'FUNCTION': 'subquery', 'JOIN_ARG': on_condition, 'COLOR': '#d0d3d3'})
     return nodes
 
 
@@ -201,11 +204,11 @@ def add_node_mainquery(nodes:list, ast: sqlglot.expressions, where_exp, on_condi
 
     try: # try to find the create or insert into statements
         target_node = list(ast.find_all(exp.Create))[0].this.this.this
-        nodes.append({'NAME_NODE': f"query_{target_node}",'LABEL_NODE': f"query_{target_node}", 'FILTER': where_exp, 'FUNCTION': 'query', 'JOIN_ARG': on_condition, 'COLOR': '#d0d3d3'})
+        nodes.append({'NAME_NODE': f"query_{target_node}",'LABEL_NODE': f"query_{target_node}", 'FILTER': sql_to_natural_language(where_exp) if where_exp != None else where_exp, 'FUNCTION': 'query', 'JOIN_ARG': on_condition, 'COLOR': '#d0d3d3'})
         nodes.append({'NAME_NODE': target_node,'LABEL_NODE': target_node, 'FILTER': None, 'FUNCTION': 'target', 'JOIN_ARG': None, 'COLOR': "#d0d3d3"})
     except IndexError:
         target_node = list(ast.find_all(exp.Insert))[0].this.this.this
-        nodes.append({'NAME_NODE': f"query_{target_node}",'LABEL_NODE': f"query_{target_node}", 'FILTER': where_exp, 'FUNCTION': 'query', 'JOIN_ARG': on_condition, 'COLOR': '#9D94FF'})
+        nodes.append({'NAME_NODE': f"query_{target_node}",'LABEL_NODE': f"query_{target_node}", 'FILTER': sql_to_natural_language(where_exp) if where_exp != None else where_exp, 'FUNCTION': 'query', 'JOIN_ARG': on_condition, 'COLOR': '#9D94FF'})
         nodes.append({'NAME_NODE': target_node,'LABEL_NODE': target_node, 'FILTER': None, 'FUNCTION': 'variable', 'JOIN_ARG': None, 'COLOR': "#D0D708"})
     return nodes
 
@@ -303,32 +306,24 @@ def sql_to_natural_language(sql_where_clause):
         str: The natural language explanation.
     """
     # Replace common SQL syntax with natural language equivalents
-    replacements = [
-        (r"\bAND\b", "and"),
-        (r"\bOR\b", "or"),
-        (r"=", "equals"),
-        (r"IN \((.*?)\)", r"is one of \1"),
-        (r"LIKE '%(.*?)%'", r"contains '\1'"),
-        (r"LIKE '(.*?)%'", r"starts with '\1'"),
-        (r"LIKE '%(.*?)'", r"ends with '\1'"),
-        (r"\(\s*(.*?)\s*\)", r"(\1)")  # Remove extra spaces inside parentheses
-    ]
-    
-    natural_lang = sql_where_clause.strip()
-    for pattern, replacement in replacements:
-        natural_lang = re.sub(pattern, replacement, natural_lang, flags=re.IGNORECASE)
-
-    # Add a period after OR conditions for better readability
-    groups = re.split(r"\\s*\\bOR\\b\\s*", natural_lang, flags=re.IGNORECASE)
-    explanation = []
-    
-    for group in groups:
-        # Keep AND intact in the explanation
-        readable_group = re.sub(r"\\s*\\bAND\\b\\s*", " and ", group)
-        explanation.append(f"{readable_group.strip()}")
-    
-    # Rejoin with " or "
-    return " or ".join(explanation)
+    #replacements = [
+    #    (r"IN \((.*?)\)", r"is one of (\1)"),
+    #    (r"LIKE '%(.*?)%'", r"contains '\1'"),
+    #    (r"LIKE '(.*?)%'", r"starts with '\1'"),
+    #    (r"LIKE '%(.*?)'", r"ends with '\1'"),
+    #    #(r"\(\s*(.*?)\s*\)", r"(\1)")  # Remove extra spaces inside parentheses
+    #    (r"CAST\((.*?) AS (.*?)\)", r"cast \1 as \2"),  # Handle CAST function
+    #    (r"CASE WHEN (.*?) THEN (.*?) ELSE (.*?) END", r"if \1, then \2, otherwise \3"),  # Handle CASE WHEN
+    #    (r"COUNT\(\*\)", "count all rows"),  # Handle COUNT(*)
+    #    (r"ISNULL\((.*?),\s*(.*?)\)", r"if \1 is null, use \2")
+    #]
+    #
+    #natural_lang = sql_where_clause.strip()
+#
+    #for pattern, replacement in replacements:
+    #    natural_lang = re.sub(pattern, replacement, natural_lang, flags=re.IGNORECASE)
+    natural_lang = sql_where_clause
+    return natural_lang
 
 
 def get_variable_tables(ast, variable_tables):
@@ -462,11 +457,16 @@ def extract_nodes(preprocessed_queries:list, node_name:str, variable_tables:dict
 
             where_exp  = list(ast.find_all(exp.Where))
             if where_exp != []:
-                where_exp =  split_on_and_or(sql_to_natural_language(where_exp[0].sql('tsql')))#.split('AND')
+                where_exp = sql_to_natural_language(where_exp[0].sql('tsql'))#.split('AND')
             else:
                 where_exp = None
+
+            join = list(ast.find_all(exp.Join))
+            if join == []:
+                on_condition = None
+            else:
             
-            on_condition = split_on_and_or("\n".join([i.sql('tsql') for i in list(ast.find_all(exp.Join))]))
+                on_condition = split_on_and_or("\n".join([i.sql('tsql') for i in list(ast.find_all(exp.Join))]))
 
             target_db = str(list(ast.find_all(exp.Update))[0].this.db)+ "." if str(list(ast.find_all(exp.Update))[0].this.db)!="" else ""
             target_node = str(list(ast.find_all(exp.Update))[0].this.this)
@@ -492,6 +492,7 @@ def extract_nodes(preprocessed_queries:list, node_name:str, variable_tables:dict
             nodes_dfs = append_convert_nodes_to_df(nodes_dfs, nodes)
 
         elif query['type'] == 'declare':
+
             
             ### NEW VERSION
             variable_1 = query['modified_SQL_query'].split("=")[1].strip()
@@ -537,9 +538,6 @@ def extract_nodes(preprocessed_queries:list, node_name:str, variable_tables:dict
             nodes.append({'NAME_NODE': query_node,'LABEL_NODE': query_node, 'FILTER': 'None', 'FUNCTION': 'query', 'JOIN_ARG': None, 'COLOR': '#d0d3d3'})
         
             nodes_dfs = append_convert_nodes_to_df(nodes_dfs, nodes)
-
-
-    #nodes_df = create_nodes_df(nodes_dfs)
 
     return nodes, variable_tables
 
