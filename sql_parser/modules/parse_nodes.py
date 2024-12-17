@@ -120,10 +120,9 @@ def extract_where_statements(tree: sqlglot.expressions) -> str:
     if where_exp != []:
         where_exp = str(where_exp[0].this.sql('tsql')).split(' AS')[0]# table
         #where_exp = sql_to_natural_language(str(where_exp[0].this.sql('tsql'))).split(' AS')[0]# table
-
+        return where_exp.replace("_doublecolumns_", "::").replace("@", "")
     else:
-        where_exp = None
-    return where_exp
+        return None
 
 
 def extract_on_statements(tree: sqlglot.expressions) -> list:
@@ -144,16 +143,15 @@ def extract_on_statements(tree: sqlglot.expressions) -> list:
             return []
         
     if joins != []:
-        return on_conditions
+        return " ".join(on_conditions)
     else:
-        return []
+        return None
 
 
 def get_statements(tree: sqlglot.expressions) -> tuple[list, str, list]:
     """
     Extracts from expression, join expression and where expression from query
     """
-
     source_tables = []
     # from expression
     source_tables = extract_from_statements(tree, source_tables)
@@ -489,7 +487,7 @@ def extract_nodes(preprocessed_queries:list, node_name:str, variable_tables:dict
             tables = list(ast.find_all(exp.Table))
 
             nodes.append({'NAME_NODE': str(tables[1]),'LABEL_NODE': str(tables[1]), 'FILTER': None, 'FUNCTION': 'DataSources', 'JOIN_ARG': None, 'COLOR': '#42d6a4'})
-            nodes.append({'NAME_NODE': query_node,'LABEL_NODE': query_node, 'FILTER': 'DELETE ' + sql_to_natural_language(where_exp[0].sql('tsql')), 'FUNCTION': 'query', 'JOIN_ARG': None, 'COLOR': '#d0d3d3'})
+            nodes.append({'NAME_NODE': query_node,'LABEL_NODE': query_node, 'FILTER': 'DELETE ' + sql_to_natural_language(where_exp[0].sql('tsql')), 'FUNCTION': 'delete table where', 'JOIN_ARG': None, 'COLOR': 'blue'})
 
             nodes_dfs = append_convert_nodes_to_df(nodes_dfs, nodes)
 
@@ -502,7 +500,7 @@ def extract_nodes(preprocessed_queries:list, node_name:str, variable_tables:dict
 
             if "::" in variable_1: # if variable is an SSIS variable then add SSIS variable to nodes, else the variable name stays the same
                 variable = variable_1 
-                nodes.append({'NAME_NODE': variable,'LABEL_NODE': variable, 'FILTER': None, 'FUNCTION': 'variable', 'JOIN_ARG': None, 'COLOR': '#d0d3d3'})
+                nodes.append({'NAME_NODE': variable,'LABEL_NODE': variable, 'FILTER': None, 'FUNCTION': 'variable', 'JOIN_ARG': None, 'COLOR': '#D0D708'})
             else:
                 variable = re.findall(r'@\w+', query['modified_SQL_query'])[0].replace('@', '')
                 value = query['modified_SQL_query'].split("=")[1].strip()

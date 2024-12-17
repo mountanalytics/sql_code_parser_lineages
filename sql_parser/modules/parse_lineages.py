@@ -42,16 +42,28 @@ def extract_target_columns(tree: sqlglot.expressions.Select) -> tuple[list, list
     target_columns =[]
 
 
-    for expression in expressions: # for every select statement, find all the target columns and add them to list
-        #print(expression)#.sql('tsql'))
-        columns = list(expression.find_all(exp.Column))
-        if columns == []:
-            columns.append(str(expression))
+    #for expression in expressions: # for every select statement, find all the target columns and add them to list
+    #    columns = list(expression.find_all(exp.Column))
+    #    if columns == []: # if there are no columns just add the string of the expression
+    #        columns.append(str(expression))
+    #    columns.append(expression)
+    #    target_columns.append([i for i in columns])
 
-        columns.append(expression)
+    ####
+
+    for expression in expressions:
+        columns = []
+        if not isinstance(expression, exp.Column):#and not isinstance(expression, exp.Alias):
+            columns.append(expression.sql('tsql'))
+        #elif not isinstance(expression, exp.Alias):
+        #    columns.append(str(expression))
+
+        else:
+            columns.append(expression)
 
         target_columns.append([i for i in columns])
-        #target_columns.append(select)
+
+    ####
 
     return expressions, target_columns
 
@@ -76,7 +88,7 @@ def extract_transformation(tree: sqlglot.expressions.Select) -> list:
         if list(col.find_all(exp.Alias)) == []: # if there are no functions
             transformations.append("")
         else: # else add the function
-            transformations.append(col.sql())
+            transformations.append(col.sql('tsql'))
 
     return transformations
 
@@ -194,9 +206,9 @@ def extract_lineage(ast, lineages:list, target_columns:list, query_node:str, tar
                 
                 if list(ast.find_all(exp.Join)) == []: # if there are no joins then parse from from statement
                     source_table = get_source_table(ast)   
-                    lineages.append({'SOURCE_COLUMNS': f"{source_table}[{source_col.split('AS')[0].strip()}]", 'TARGET_COLUMN': f"{query_node}[{source_col.split('AS')[0].strip()}]", 'TRANSFORMATION': ""})
+                    lineages.append({'SOURCE_COLUMNS': f"{source_table}[{source_col.split(' AS')[0].strip()}]", 'TARGET_COLUMN': f"{query_node}[{source_col.split('AS')[0].strip()}]", 'TRANSFORMATION': ""})
 
-                lineages.append({'SOURCE_COLUMNS': f"{query_node}[{source_col.split('AS')[0].strip()}]", 'TARGET_COLUMN': f"{target_node}[{source_col.split('AS')[-1].strip()}]", 'TRANSFORMATION': source_col})
+                lineages.append({'SOURCE_COLUMNS': f"{query_node}[{source_col.split(' AS')[0].strip()}]", 'TARGET_COLUMN': f"{target_node}[{source_col.split('AS')[-1].strip()}]", 'TRANSFORMATION': source_col})
 
 
     return lineages
@@ -234,7 +246,8 @@ def extract_lineages(preprocessed_queries:list, nodes:pd.DataFrame, node_name :s
                 tree = replace_aliases(query[component]) # remove table aliases
                 
                 select_statement, target_columns = extract_target_columns(tree) # extract target columns
-                select_statement = [x.transform(transformer_functions) for x in select_statement] # remove column aliases
+                #select_statement = [x.transform(transformer_functions) for x in select_statement] # remove column aliases
+                print(target_columns)
                 transformations = extract_transformation(select_statement)
                 target_columns = list(zip(target_columns, transformations)) 
                 query_node, target_node = get_next_nodes(query, component, destination)
