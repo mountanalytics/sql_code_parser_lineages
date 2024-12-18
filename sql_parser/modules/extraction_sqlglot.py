@@ -248,16 +248,7 @@ def add_alias_on_anonym_transformation(ast: sqlglot.expressions):
     for expression in select:
         ast = ast.transform(transformer_add_alias)
 
-    #print(ast)
-
     return ast
-
-
-
-     
-    #print([type(expression) for expression in list(ast.find_all(exp.Select))[0]])
-    #print(type(repr(list(ast.find_all(exp.Select))[0].expressions[0])))
-    #print(str(list(ast.find_all(exp.Select))[0].expressions[0]).split('(')[0])
 
 
 
@@ -296,14 +287,6 @@ def preprocess_queries_ssis(queries:str, result_set :str, node_name:str) -> dict
   
 
         if 'declare' not in query.lower() and 'if not exists' not in query.lower() and ('select' in query.lower() or 'set' in query.lower()):
-            # parse
-            #ast = sqlglot.parse_one(query, dialect = 'tsql')
-            #print(query)
-            #print('####')
-            #print(result_set)
-            #print(query)
-            #print('####')
-
     
             def correct_cast_syntax(query):
                 """
@@ -319,9 +302,6 @@ def preprocess_queries_ssis(queries:str, result_set :str, node_name:str) -> dict
             if result_set != None:
                 query = f"INSERT INTO {result_set.replace('::', '_doublecolumns_')} \n" + query
             ast = parse_one(replace_spaces_in_brackets(query).replace('[', '').replace(']', ''))
-            
-            #print(query)
-            #print('####')
 
             def transformer_vars(node):
                     for var in list(ast.find_all(exp.Var)):

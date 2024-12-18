@@ -546,3 +546,135 @@ def extract_nodes(preprocessed_queries:list, node_name:str, variable_tables:dict
 
 
 
+def get_rationalization_score(preprocessed_queries, node_name):
+    """
+    Get the rationalization score 
+    """
+
+    def count_hardcoded_values(ast):
+        harcoded_values = list(ast.find_all(exp.Literal))
+        #print(harcoded_values)
+        return len(harcoded_values)
+    
+    def count_subqueries(ast):
+        string = ast.sql('tsql')
+        # Use str.count() to count non-overlapping occurrences of "subquery"
+        count = string.lower().count("subquery")
+        return count
+     
+    def count_joins(ast):
+        joins = list(ast.find_all(exp.Join))
+        return len(joins)
+    
+    def count_casts(ast):
+        casts = list(ast.find_all(exp.Cast))
+        return len(casts)   
+    
+    def count_variables(ast):
+        vars = list(ast.find_all(exp.Var))
+        print(vars)
+        return len(vars)  
+    
+    def count_null_replacaments(ast):
+        string = ast.sql('tsql')
+        # Use str.count() to count non-overlapping occurrences of "subquery"
+        count = string.lower().count(" isnull(")
+        return count
+    
+    def get_target_variable(ast):
+        # check if the target table is temporary
+        try:
+            target = list(ast.find_all(exp.Insert))
+        except:
+            target = list(ast.find_all(exp.Create))
+        
+        if target != []:
+            target = target[0].this
+        else:
+            return False
+        
+        if "_doublecolumns_" in str(target):
+            return True
+        return False
+
+    data = {}
+
+     
+    
+    for i, query in enumerate(preprocessed_queries):
+
+        query_node = f"query_{node_name}_{i+1}"
+        if type(query['modified_SQL_query']) != str:
+
+            if type(query['subquery_dictionary']) == dict:
+
+                subqueries = query['subquery_dictionary']#.values() 
+
+                for subquery_name, subquery in subqueries.items():
+                    print(subquery.sql('tsql'))
+                    print()
+                    print("length query: ", len(subquery.sql('tsql').split()))
+                    query_length = len(subquery.sql('tsql').split())
+                    print()
+                    count_hardcoded_values(subquery)
+                    hardcoded_values_count = count_hardcoded_values(subquery)
+                    print()
+                    print('variable count: ', count_variables(subquery))
+                    variables_count = count_variables(subquery)
+                    print()                  
+                    print('joins count: ', count_joins(subquery))
+                    joins_count = count_joins(subquery)
+                    print()
+                    print('subqueries count: ', count_subqueries(subquery))
+                    subqueries_count =count_subqueries(subquery)
+                    print()
+                    print('casts count: ', count_casts(subquery))
+                    casts_count = count_casts(subquery)
+                    print()
+                    print('nulls count: ', count_null_replacaments(subquery))
+                    nulls_repl_count = count_null_replacaments(subquery)
+                    print()
+
+                    print('-------------')
+                    print()             
+                    data[subquery_name] = {'query_length': query_length, 'hard_coded': hardcoded_values_count, 'repl_null': nulls_repl_count, 'more_5_vars': variables_count, 'more_3_joins': joins_count, 'subqueries':subqueries_count, 'type_conversion': casts_count}  
+
+            print(repr(query['modified_SQL_query'].sql('tsql')))
+
+            print()
+            print("length query: ", len(query['modified_SQL_query'].sql('tsql').split()))
+            query_length = len(query['modified_SQL_query'].sql('tsql').split())
+            print()
+            print("hardcoded_values count: ", count_hardcoded_values(query['modified_SQL_query']))
+            hardcoded_values_count = count_hardcoded_values(query['modified_SQL_query'])
+            print()
+            print('variable count: ', count_variables(query['modified_SQL_query']))
+            variables_count = count_variables(query['modified_SQL_query'])
+            print()   
+            print('joins count: ', count_joins(query['modified_SQL_query']))
+            joins_count = count_joins(query['modified_SQL_query'])
+            print()
+            print('subqueries count: ', count_subqueries(query['modified_SQL_query']))
+            subqueries_count = count_subqueries(query['modified_SQL_query'])
+            print()
+            print('casts count: ', count_casts(query['modified_SQL_query']))
+            casts_count = count_casts(query['modified_SQL_query'])
+            print()
+            print('nulls count: ', count_null_replacaments(query['modified_SQL_query']))
+            nulls_repl_count = count_null_replacaments(query['modified_SQL_query'])
+            print()
+
+            print('target variable: ', get_target_variable(query['modified_SQL_query']))
+            temporary_table = get_target_variable(query['modified_SQL_query'])
+            print()
+
+
+
+            data[query_node] = {'query_length': query_length, 'hard_coded': hardcoded_values_count, 'repl_null': nulls_repl_count, 'more_5_vars': variables_count, 'more_3_joins': joins_count, 'subqueries':subqueries_count, 'type_conversion': casts_count}  
+
+    print(data)
+
+    print('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+    print()
+    return data
+
