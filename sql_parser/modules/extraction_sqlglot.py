@@ -309,7 +309,7 @@ def preprocess_queries_ssis(queries:str, result_set :str, node_name:str) -> dict
                 """
                 Corrects CAST(type, column) to CAST(column AS type) in a T-SQL query.
                 """
-                corrected_query = re.sub(r"Convert\((\w+),\s*(@?\w+)\)", r"CAST(\2 AS \1)", query, flags=re.IGNORECASE)
+                corrected_query = re.sub(r"Convert\((\w+),\s?(@?\w+)\)", r"CAST(\2 AS \1)", query, flags=re.IGNORECASE)
                 return corrected_query
 
             # Example usage

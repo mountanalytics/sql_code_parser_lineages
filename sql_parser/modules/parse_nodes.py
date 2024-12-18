@@ -120,7 +120,6 @@ def extract_where_statements(tree: sqlglot.expressions) -> str:
     """
     where_exp = list(tree.find_all(exp.Where))
     if where_exp != []:
-        print(repr(where_exp[0]))
         where_exp = str(where_exp[0].this.sql('tsql'))#.split(' AS')[0]# table
         #where_exp = sql_to_natural_language(str(where_exp[0].this.sql('tsql'))).split(' AS')[0]# table
         return where_exp.replace("_doublecolumns_", "::").replace("@", "")
@@ -295,7 +294,7 @@ def replace_alias_update_table(ast: sqlglot.expressions) -> sqlglot.expressions:
     return ast
 
 
-def sql_to_natural_language(sql_where_clause):
+def sql_to_natural_language(sql_clause):
     """
     Converts a SQL WHERE clause into a natural language explanation.
 
@@ -306,23 +305,27 @@ def sql_to_natural_language(sql_where_clause):
         str: The natural language explanation.
     """
     # Replace common SQL syntax with natural language equivalents
-    #replacements = [
-    #    (r"IN \((.*?)\)", r"is one of (\1)"),
-    #    (r"LIKE '%(.*?)%'", r"contains '\1'"),
-    #    (r"LIKE '(.*?)%'", r"starts with '\1'"),
-    #    (r"LIKE '%(.*?)'", r"ends with '\1'"),
-    #    #(r"\(\s*(.*?)\s*\)", r"(\1)")  # Remove extra spaces inside parentheses
-    #    (r"CAST\((.*?) AS (.*?)\)", r"cast \1 as \2"),  # Handle CAST function
-    #    (r"CASE WHEN (.*?) THEN (.*?) ELSE (.*?) END", r"if \1, then \2, otherwise \3"),  # Handle CASE WHEN
-    #    (r"COUNT\(\*\)", "count all rows"),  # Handle COUNT(*)
-    #    (r"ISNULL\((.*?),\s*(.*?)\)", r"if \1 is null, use \2")
-    #]
-    #
-    #natural_lang = sql_where_clause.strip()
-#
-    #for pattern, replacement in replacements:
-    #    natural_lang = re.sub(pattern, replacement, natural_lang, flags=re.IGNORECASE)
-    natural_lang = sql_where_clause
+    replacements = [
+        (r"NOT (.*?) IN \((.*?)\)", r"\1 IS NOT ONE OF (\2)"),
+        (r"IN \((.*?)\)", r"IS ONE OF (\1)"),
+
+        (r"LIKE '%(.*?)%'", r"CONTAINS '\1'"),
+        (r"LIKE '(.*?)%'", r"STARTS WITH '\1'"),
+        (r"LIKE '%(.*?)'", r"ENDS WITH '\1'"),
+        (r"LIKE (.*?)", r"CONTAINS \1"),
+
+        (r"CAST\((.*?) AS (.*?)\)", r"(CONVERT \1 TO \2)"),  # Handle CAST function
+        (r"CASE WHEN (.*?) THEN (.*?) ELSE (.*?) END", r"IF \1, THEN \2, ELSE \3"),  # Handle CASE WHEN
+        (r"COUNT\(\*\)", "COUNTS ALL ROWS"),  # Handle COUNT(*)
+        (r"ISNULL\((.*?), (.*?)\)", r'IF \1 IS NULL THEN \"\2\"')
+    ]
+    
+    natural_lang = sql_clause.strip()
+
+    for pattern, replacement in replacements:
+        natural_lang = re.sub(pattern, replacement, natural_lang, flags=re.IGNORECASE)
+        continue
+
     return natural_lang
 
 
