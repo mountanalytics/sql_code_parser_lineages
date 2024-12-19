@@ -11,8 +11,7 @@ def main(query, result_set, nodes, lineages, variable_tables, node_name):
     preprocessed_queries = preprocess_queries_ssis(query, result_set, node_name) 
     nodes_q, variable_tables = extract_nodes(preprocessed_queries, node_name, variable_tables)
 
-    get_rationalization_score(preprocessed_queries, node_name)
-
+    nodes_flag = get_rationalization_score(preprocessed_queries, node_name)
     lineages_q = extract_lineages(preprocessed_queries, nodes_q, node_name)
 
-    return nodes_q, lineages_q, variable_tables
+    return nodes_q, lineages_q, variable_tables, nodes_flag

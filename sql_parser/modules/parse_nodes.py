@@ -610,71 +610,25 @@ def get_rationalization_score(preprocessed_queries, node_name):
 
                 subqueries = query['subquery_dictionary']#.values() 
 
-                for subquery_name, subquery in subqueries.items():
-                    print(subquery.sql('tsql'))
-                    print()
-                    print("length query: ", len(subquery.sql('tsql').split()))
+                for subquery_name, subquery in subqueries.items():       
                     query_length = len(subquery.sql('tsql').split())
-                    print()
+        
                     count_hardcoded_values(subquery)
                     hardcoded_values_count = count_hardcoded_values(subquery)
-                    print()
-                    print('variable count: ', count_variables(subquery))
                     variables_count = count_variables(subquery)
-                    print()                  
-                    print('joins count: ', count_joins(subquery))
                     joins_count = count_joins(subquery)
-                    print()
-                    print('subqueries count: ', count_subqueries(subquery))
                     subqueries_count =count_subqueries(subquery)
-                    print()
-                    print('casts count: ', count_casts(subquery))
                     casts_count = count_casts(subquery)
-                    print()
-                    print('nulls count: ', count_null_replacaments(subquery))
                     nulls_repl_count = count_null_replacaments(subquery)
-                    print()
-
-                    print('-------------')
-                    print()             
                     data[subquery_name] = {'query_length': query_length, 'hard_coded': hardcoded_values_count, 'repl_null': nulls_repl_count, 'more_5_vars': variables_count, 'more_3_joins': joins_count, 'subqueries':subqueries_count, 'type_conversion': casts_count}  
-
-            print(repr(query['modified_SQL_query'].sql('tsql')))
-
-            print()
-            print("length query: ", len(query['modified_SQL_query'].sql('tsql').split()))
             query_length = len(query['modified_SQL_query'].sql('tsql').split())
-            print()
-            print("hardcoded_values count: ", count_hardcoded_values(query['modified_SQL_query']))
             hardcoded_values_count = count_hardcoded_values(query['modified_SQL_query'])
-            print()
-            print('variable count: ', count_variables(query['modified_SQL_query']))
             variables_count = count_variables(query['modified_SQL_query'])
-            print()   
-            print('joins count: ', count_joins(query['modified_SQL_query']))
             joins_count = count_joins(query['modified_SQL_query'])
-            print()
-            print('subqueries count: ', count_subqueries(query['modified_SQL_query']))
             subqueries_count = count_subqueries(query['modified_SQL_query'])
-            print()
-            print('casts count: ', count_casts(query['modified_SQL_query']))
             casts_count = count_casts(query['modified_SQL_query'])
-            print()
-            print('nulls count: ', count_null_replacaments(query['modified_SQL_query']))
             nulls_repl_count = count_null_replacaments(query['modified_SQL_query'])
-            print()
-
-            print('target variable: ', get_target_variable(query['modified_SQL_query']))
             temporary_table = get_target_variable(query['modified_SQL_query'])
-            print()
-
-
-
-            data[query_node] = {'query_length': query_length, 'hard_coded': hardcoded_values_count, 'repl_null': nulls_repl_count, 'more_5_vars': variables_count, 'more_3_joins': joins_count, 'subqueries':subqueries_count, 'type_conversion': casts_count}  
-
-    print(data)
-
-    print('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-    print()
+            data[query_node] = {'query_length': query_length, 'hard_coded': hardcoded_values_count, 'repl_null': nulls_repl_count, 'more_5_vars': variables_count, 'more_3_joins': joins_count, 'subqueries':subqueries_count, 'type_conversion': casts_count}
     return data
 
